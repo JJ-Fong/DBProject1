@@ -5,11 +5,16 @@
  */
 package GUI;
 
+import Visitor.AntLr;
+import java.util.ArrayList;
+import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
+import javax.swing.border.Border;
+import org.antlr.v4.runtime.tree.gui.TreeViewer;
 
 /**
  *
@@ -17,10 +22,12 @@ import javax.swing.JTree;
  */
 public class GUI extends javax.swing.JFrame {
     JTree master;
-    JScrollPane output, masterPane;
+    JScrollPane output, masterPane, graphTree;
     JTabbedPane mainPane; 
     JTextArea input;
     JTable structure, data; 
+    
+    DBDataManager dbman; 
     /**
      * Creates new form GUI
      */
@@ -34,9 +41,11 @@ public class GUI extends javax.swing.JFrame {
         structure = new JTable();
         data = new JTable(); 
         
+        graphTree = new JScrollPane(); 
         mainPane.addTab("Examinar", data);
         mainPane.addTab("Estructura", structure); 
         mainPane.add("SQL", input); 
+        mainPane.addTab("Graph", graphTree);
         
         jSplitPane2.setRightComponent(mainPane);
         
@@ -46,6 +55,13 @@ public class GUI extends javax.swing.JFrame {
         
         jSplitPane2.setDividerLocation(0.3);
         jSplitPane1.setRightComponent(output);
+        
+        Border empty = BorderFactory.createEmptyBorder();
+        jButton1.setBorder(empty);
+        jButton2.setBorder(empty);
+        jButton3.setBorder(empty);
+        
+        dbman = new DBDataManager(); 
     }
 
     /**
@@ -59,8 +75,15 @@ public class GUI extends javax.swing.JFrame {
 
         jSplitPane1 = new javax.swing.JSplitPane();
         jSplitPane2 = new javax.swing.JSplitPane();
-        jToolBar1 = new javax.swing.JToolBar();
+        jToolBar2 = new javax.swing.JToolBar();
         jButton1 = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
+        jButton2 = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
+        jButton3 = new javax.swing.JButton();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        jMenu2 = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -70,40 +93,71 @@ public class GUI extends javax.swing.JFrame {
         jSplitPane2.setDividerLocation(600);
         jSplitPane1.setTopComponent(jSplitPane2);
 
-        jToolBar1.setRollover(true);
+        jToolBar2.setRollover(true);
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/run_icon.jpg"))); // NOI18N
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/save-128.png"))); // NOI18N
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        jToolBar2.add(jButton1);
+        jToolBar2.add(jSeparator1);
+
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/open.png"))); // NOI18N
+        jButton2.setFocusable(false);
+        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar2.add(jButton2);
+        jToolBar2.add(jSeparator2);
+
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/execute.png"))); // NOI18N
+        jButton3.setFocusable(false);
+        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                jButton3ActionPerformed(evt);
             }
         });
-        jToolBar1.add(jButton1);
+        jToolBar2.add(jButton3);
+
+        jMenu1.setText("File");
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("Edit");
+        jMenuBar1.add(jMenu2);
+
+        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1250, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jToolBar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jToolBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE))
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
+        String progra =  input.getText();
+        if(!"".equals(progra)){
+            /*Inicio el lexer y parser*/
+            AntLr LexPa = new AntLr(progra);
+            TreeViewer viewer = LexPa.Lexer_Parser();
+            graphTree.setViewportView(viewer);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -142,8 +196,15 @@ public class GUI extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JToolBar.Separator jSeparator1;
+    private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
-    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JToolBar jToolBar2;
     // End of variables declaration//GEN-END:variables
 }
