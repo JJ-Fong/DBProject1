@@ -3,6 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
+/*Universidad del Valle de Guatemala
+Prof. Sergio Molina
+Proyecto No. 1 - CC3040 Bases de Datos
+Integrantes: 
+Mario Barrientos - Carné No. 13039
+Javier Fong - Carné No. 13118
+William Fuentes - Carné No. 13324
+*/
 package GUI;
 
 import java.io.BufferedWriter;
@@ -270,7 +279,7 @@ public class DBDataManager implements dataManager{
         String tName = newTable.getName(); 
         /* VER QUE NO EXISTA LA TABLA EN LA DB ACTUAL*/
         if (actual == null) { 
-            System.out.println("NO DB SELECTED");
+            msg.add("NO DB SELECTED");
         } else { 
             if (!existTable(tName)) { 
                 JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
@@ -501,19 +510,19 @@ public class DBDataManager implements dataManager{
                                                         checkConditions.add(ConditionObj);    
                                                     }
                                                 } else { 
-                                                    System.out.println(conColumn+" and "+tempCon.getValue()+" are not the same type nor can they be cast");
+                                                    msg.add(conColumn+" and "+tempCon.getValue()+" are not the same type nor can they be cast");
                                                 }
                                             }
                                         } else {
 
                                         }
                                     } else {
-                                        System.out.println("COLUMN "+conColumn+" IN CHECK "+tempChk.getNombreCons()+" DOESN'T EXIST");
+                                        msg.add("COLUMN "+conColumn+" IN CHECK "+tempChk.getNombreCons()+" DOESN'T EXIST");
                                     }
                                     k++;
                                 }
                             } else {
-                                System.out.println(tempChk.getNombreCons()+" ID ALREADY EXIST IN TABLE "+newTable.getName()); 
+                                msg.add(tempChk.getNombreCons()+" ID ALREADY EXIST IN TABLE "+newTable.getName()); 
                             }
                             if (allGood) { 
                                 chekObj.put("name", tempChk.getNombreCons());
@@ -613,21 +622,48 @@ public class DBDataManager implements dataManager{
                     
                     JSONArray atributes = (JSONArray) table.get("atributes");
                     JSONArray primary = (JSONArray) table.get("primary");
-                    if (existColumn(columna,primary)) {
-                        
+                    JSONObject pk = (JSONObject) primary.get(0);
+                    JSONArray pkAtributes = (JSONArray) pk.get("atributes");
+                    if (existColumn(columna,pkAtributes)) {
+                        boolean related = false; 
+                        int i = 0;
+                        while(!related && (i < TableList.size())) { 
+                            JSONObject tempTable = (JSONObject) TableList.get(i);
+                            JSONArray foreignK = (JSONArray) tempTable.get("foreign");
+                            int j = 0; 
+                            while (!related && (j < foreignK.size())) { 
+                                JSONObject fk = (JSONObject) foreignK.get(j);
+                                String refTable = (String) fk.get("table"); 
+                                related = refTable.equals(TableName); 
+                            }
+                            i++;
+                        }
+                        if (related) { 
+                            msg.add("COLUMN "+columna+" CANT BE DROPEED, IT HAS A CONSTRAINT OVER IT");
+                        } else {
+                            int index = getIndex(columna, atributes); 
+                            atributes.remove(index);
+                            table.put("atributes", atributes);
+                            TableList.remove(getIndex(TableName, TableList)); 
+                            TableList.add(table);
+                            this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                        }
                     } else {
                         int index = getIndex(columna, atributes); 
                         atributes.remove(index);
                         table.put("atributes", atributes);
-                    }
+                        TableList.remove(getIndex(TableName, TableList)); 
+                        TableList.add(table);
+                        this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                        }
                 } else { 
-                    System.out.println("COLUMN "+columna+" DOESN'T EXIST IN TABLE "+TableName);
+                    msg.add("COLUMN "+columna+" DOESN'T EXIST IN TABLE "+TableName);
                 }
             } else {
-                System.out.println("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
+                msg.add("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
             }
         } else {
-            System.out.println("NO DB SELECTED");
+            msg.add("NO DB SELECTED");
         }
     }
 
@@ -661,12 +697,12 @@ public class DBDataManager implements dataManager{
                 this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
                 File file = new File (actual.getDirPath()+"\\"+TableName+".json");
                 file.delete();
-                System.out.println("TABLE "+TableName+" DROPPED SUCCESFULLY");
+                msg.add("TABLE "+TableName+" DROPPED SUCCESFULLY");
             } else {
-                System.out.println("RELATIONSHIP FOUND WITH THIS TABLE AND OTHER TABLE");
+                msg.add("RELATIONSHIP FOUND WITH THIS TABLE AND OTHER TABLE");
             }
         } else {
-            System.out.println("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
+            msg.add("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
         }
     }
 
@@ -723,12 +759,58 @@ public class DBDataManager implements dataManager{
 
     @Override
     public void addColumn(String TableName, Atributo nuevo, ArrayList<primaryKey> primaryKeys, ArrayList<foreignKey> foreignKeys, ArrayList<Check> conditions) {
-    
+        
     }
 
     @Override
     public void addConstraint(String TableName, primaryKey primKey) {
-    
+        if (actual != null) {
+            if (existTable(TableName)) { 
+                JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                JSONObject Table = (JSONObject) TableList.get(getIndex(TableName,TableList)); 
+                JSONArray primary = (JSONArray) Table.get("primary");
+                JSONArray atributes = (JSONArray) Table.get("atributes");
+                JSONArray foreign = (JSONArray) Table.get("foreign");
+                JSONArray condition= (JSONArray) Table.get("condition");
+                if (primary.size()  > 0) {
+                    msg.add("TABLE "+TableName+" CAN'T HAVE MORE THAN ONE PRIMARY KEY");
+                } else { 
+                    JSONObject prim = new JSONObject(); 
+                    JSONArray primAtr = new JSONArray(); 
+                    boolean allGood = true; 
+                    ArrayList key = primKey.getAtributes(); 
+                    int i = 0; 
+                    
+                    allGood = !(existColumn(primKey.getName(),atributes)||existColumn(primKey.getName(),primary)||existColumn(primKey.getName(),foreign)||existColumn(primKey.getName(),condition));
+                    if (!allGood) msg.add("ID "+primKey.getName()+" ALREADY EXIST IN TABLE "+TableName);
+                    while(allGood && (i < key.size())) { 
+                        String atr = String.valueOf(key.get(i)); 
+                        allGood = existColumn(atr,atributes); 
+                        if (allGood) {
+                            JSONObject PKatr = new JSONObject(); 
+                            PKatr.put("name", atr); 
+                            primAtr.add(PKatr); 
+                        }
+                        i++; 
+                    }
+                    if (allGood) {
+                        prim.put("name",primKey.getName());
+                        prim.put("atributes", primAtr); 
+                        primary.add(prim);
+                        Table.put("primary", primary); 
+                        TableList.remove(getIndex(TableName,TableList));
+                        TableList.add(Table);
+                        this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                    } else {
+                        msg.add("ATRIBUTE IN NEW PK KEY DOESN'T EXIST");
+                    }
+                }
+            } else {
+                msg.add("TABLE "+TableName+" DOESN'T EXIST");
+            }
+        } else { 
+            msg.add("NO DB SELECTED");
+        }
     }
 
     @Override
@@ -767,27 +849,27 @@ public class DBDataManager implements dataManager{
                 if (!found) { 
                     primary.remove(0); 
                     table.put("primary", primary);
-                    System.out.println("PRIMARY KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+                    msg.add("PRIMARY KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
                 } else {
-                    System.out.println("PRIMARY KEY "+idConstraint+" CANT BE DROPED, IT IS FOREIGN KEY IN TABLE "+relTable);
+                    msg.add("PRIMARY KEY "+idConstraint+" CANT BE DROPED, IT IS FOREIGN KEY IN TABLE "+relTable);
                 }
             } else if (existColumn(idConstraint, foreign)) {
                 int index = getIndex(idConstraint, foreign); 
                 foreign.remove(index); 
                 table.put("foreign", foreign);
-                System.out.println("FOREIGN KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+                msg.add("FOREIGN KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
             } else if (existColumn(idConstraint, condition)) { 
                 int index = getIndex(idConstraint, condition); 
                 condition.remove(index);
                 table.put("condition", condition);
-                System.out.println("CONDITION "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+                msg.add("CONDITION "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
             }
             
             TableList.remove(tableIndex);
             TableList.add(table); 
             this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
         } else {
-            System.out.println(TableName+" DOESN'T EXIST IN DB "+actual.getName());
+            msg.add(TableName+" DOESN'T EXIST IN DB "+actual.getName());
         }
     }
     
@@ -826,7 +908,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return columns;
     }
@@ -844,7 +926,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return types;
     }
@@ -862,7 +944,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return indexs;
     }
@@ -880,7 +962,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return size;
     }
@@ -903,7 +985,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return PK;
     }
@@ -926,7 +1008,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         return FK;
     }
@@ -950,7 +1032,7 @@ public ArrayList<String> getTableColumns (String TableName){
             }
         }
         else{
-            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+            msg.add("ERROR. La Tabla "+TableName+" no existe.");
         }
         
         return values;
@@ -972,7 +1054,7 @@ public ArrayList<String> getTableColumns (String TableName){
                     for (int i = 0; i < columnasTabla.size(); i++) {
                         //valido de que el tipo de dato que le estoy metiendo sea del mismo tipo de la columna.
                         Value val = (Value) values.get(i);
-                        //System.out.println(tiposTabla.get(i) +" "+ indices.get(i)+" "+ val.getTipo());
+                        //msg.add(tiposTabla.get(i) +" "+ indices.get(i)+" "+ val.getTipo());
                         if (tiposTabla.get(i).equals(val.getTipo())){
                             if (tiposTabla.get(i).equals("date") || val.getTipo().equals("date")){
                                 dateManager revDate = new dateManager();
@@ -980,7 +1062,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                     obj.put(columnasTabla.get(i), val.getValue());
                                 }
                                 else{
-                                    System.out.println("ERROR. La fecha "+ val.getValue()+ "es invalida.");
+                                    msg.add("ERROR. La fecha "+ val.getValue()+ "es invalida.");
                                     error = true;
                                 }
                             }
@@ -989,7 +1071,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                 ArrayList<Long> sizes = getColumnsSize(nomTabla);
                                 int tamActual = sizes.get(i).intValue();
                                 if (val.getValue().length()-2> tamActual){
-                                    System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                    msg.add("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
                                     error = true;
                                 }
                                 else{
@@ -1016,7 +1098,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                 obj.put(columnasTabla.get(i), val.getValue()+".0");
                             }
                             else{
-                                System.out.println("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                msg.add("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
                                 error = true;
                             }
                         }
@@ -1056,7 +1138,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                     }
                                 }
                                 else{
-                                    System.out.println("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
+                                    msg.add("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
                                     error = true;
                                 }
                             }
@@ -1065,7 +1147,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                 ArrayList<Long> sizes = getColumnsSize(nomTabla);
                                 int tamActual = sizes.get(i).intValue();
                                 if (((Value)values.get(i)).getValue().length()-2> tamActual){
-                                    System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                    msg.add("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
                                     error = true;
                                 }
                                 else{
@@ -1137,7 +1219,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                     }
                             }
                             else{
-                                System.out.println("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                msg.add("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
                                 error = true;
                             }
                         }
@@ -1157,20 +1239,20 @@ public ArrayList<String> getTableColumns (String TableName){
                     this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
                 }
                 else{
-                    System.out.println("ERROR. No se pueden insertar mas valores de la cantidad de columnas de la tabla.");
+                    msg.add("ERROR. No se pueden insertar mas valores de la cantidad de columnas de la tabla.");
                     error = true;
                 }
             }
             //****************************************PARTE DOS DEL INSERTTT**********************************
         else{ //cuando si incluyen que valores de que columnas quieren insertar
                if (columns.size()>columnasTabla.size()) {
-                   System.out.println("ERROR. No se pueden seleccionar mas columnas de las que tiene la tabla solicitada.");
+                   msg.add("ERROR. No se pueden seleccionar mas columnas de las que tiene la tabla solicitada.");
                    error = true;
                }
                else{
                    if (columns.size() == values.size()) {
                        if (values.size()>columnasTabla.size()){
-                            System.out.println("ERROR. Se pretende insertar mas valores a la tabla que la misma cantidad de columnas de la misma.");
+                            msg.add("ERROR. Se pretende insertar mas valores a la tabla que la misma cantidad de columnas de la misma.");
                             error = true;
                         }
                         else if (columnasTabla.size()>values.size()){ //cuando hay que reemplazar con nulls
@@ -1210,7 +1292,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                                         this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");    
                                                    }
                                                      else{
-                                                         System.out.println("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
+                                                         msg.add("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
                                                          error = true;
                                                      }
                                                  }
@@ -1219,7 +1301,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                                      ArrayList<Long> sizes = getColumnsSize(nomTabla);
                                                      int tamActual = sizes.get(i).intValue();
                                                      if (((Value)values.get(i)).getValue().length()-2> tamActual){
-                                                         System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                                         msg.add("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
                                                          error = true;
                                                      }
                                                      else{
@@ -1347,7 +1429,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                                     this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
                                                  }
                                                  else{
-                                                     System.out.println("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                                     msg.add("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
                                                      error = true;
                                                  }
                                             }
@@ -1376,7 +1458,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                              }
                                          }
                                          else{
-                                            System.out.println("ERROR. Se esta especificando una columna ("+columns.get(i)+") que no existe en la tabla .");
+                                            msg.add("ERROR. Se esta especificando una columna ("+columns.get(i)+") que no existe en la tabla .");
                                             error = true;   
                                          }
                                      }
@@ -1398,7 +1480,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                                       obj.put(columnasTabla.get(i), val.getValue());
                                                   }
                                                   else{
-                                                      System.out.println("ERROR. La fecha "+ val.getValue()+ "es invalida.");
+                                                      msg.add("ERROR. La fecha "+ val.getValue()+ "es invalida.");
                                                       error = true;
                                                   }
                                               }
@@ -1407,7 +1489,7 @@ public ArrayList<String> getTableColumns (String TableName){
                                                   ArrayList<Long> sizes = getColumnsSize(nomTabla);
                                                   int tamActual = sizes.get(i).intValue();
                                                   if (val.getValue().length()-2> tamActual){
-                                                      System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                                      msg.add("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
                                                       error = true;
                                                   }
                                                   else{
@@ -1434,13 +1516,13 @@ public ArrayList<String> getTableColumns (String TableName){
                                                   obj.put(columnasTabla.get(i), val.getValue()+".0");
                                               }
                                               else{
-                                                  System.out.println("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                                  msg.add("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
                                                   error = true;
                                               }
                                          }
                                      }
                                      else{
-                                         System.out.println("ERROR. Se esta especificando una columna que no existe en la tabla ("+columns.get(i)+").");
+                                         msg.add("ERROR. Se esta especificando una columna que no existe en la tabla ("+columns.get(i)+").");
                                          error = true;
                                      }
                                  }
@@ -1460,21 +1542,21 @@ public ArrayList<String> getTableColumns (String TableName){
                         }
                     }
                     else{
-                        System.out.println("ERROR. La cantidad de columnas especificadas deben de ser igual a la cantidad de elementos en la clausula VALUE.");
+                        msg.add("ERROR. La cantidad de columnas especificadas deben de ser igual a la cantidad de elementos en la clausula VALUE.");
                         error = true;
                     }   
                 }
             }
         }
         else{
-            System.out.println("ERROR. La tabla a la cual se quiere hacer insert ("+nomTabla +") no existe.");
+            msg.add("ERROR. La tabla a la cual se quiere hacer insert ("+nomTabla +") no existe.");
             error = true;
         }
         if (error) {
-                System.out.println("ERROR. El INSERT ("+ insrows+ ") NO se ha realizado con exito.");
+                msg.add("ERROR. El INSERT ("+ insrows+ ") NO se ha realizado con exito.");
             }
         else{
-            System.out.println("El INSERT ("+insrows+") se ha realizado con exito.");
+            msg.add("El INSERT ("+insrows+") se ha realizado con exito.");
         }
     }
     
@@ -1497,10 +1579,10 @@ public ArrayList<String> getTableColumns (String TableName){
         
         
         if (error) {
-            System.out.println("UPDATE ("+rowsupt+") realizado con exito.");
+            msg.add("UPDATE ("+rowsupt+") realizado con exito.");
         }
         else{
-            System.out.println("ERROR. UPDATE ("+rowsupt+") no se ha realizado con exito.");
+            msg.add("ERROR. UPDATE ("+rowsupt+") no se ha realizado con exito.");
         }
     }
     
@@ -1517,10 +1599,10 @@ public ArrayList<String> getTableColumns (String TableName){
         }
         
         if (error) {
-            System.out.println("DELETE ("+rowsdel+") realizado con exito.");
+            msg.add("DELETE ("+rowsdel+") realizado con exito.");
         }
         else{
-            System.out.println("ERROR. DELETE ("+rowsdel+") no se ha realizado con exito.");
+            msg.add("ERROR. DELETE ("+rowsdel+") no se ha realizado con exito.");
         }
     }
 }

@@ -301,18 +301,19 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         String nameTB = ctx.getChild(2).getText();
         List <sqlParser.TableActionContext> acTable = ctx.tableAction();
         for(sqlParser.TableActionContext o:acTable){
-            if(o.getText().contains("ADDCOLU")){
+            
+            if(o.getText().toUpperCase().contains("ADDCOLU")){
                 column col = (column) this.visitAddColumnTB((sqlParser.AddColumnTBContext) o);
                 mn.addColumn(nameTB, col.getAt(), col.getPrimary(), col.getFore(), null);
             }
-            else if(o.getText().contains("ADDCONST")){
+            if(o.getText().toUpperCase().contains("ADDCONST")){
                 this.visitAddConstraintTB((sqlParser.AddConstraintTBContext) o);
             }
-            else if(o.getText().contains("DROPCOL")){
+            if(o.getText().toUpperCase().contains("DROPCOL")){
                 String nameCol = (String) this.visitDropColumnTB((sqlParser.DropColumnTBContext) o);
                 mn.dropColumn(nameTB, nameCol);
             }
-            else{
+            if(o.getText().toUpperCase().contains("DROPCONST")){
                String nameCons = (String) this.visitDropConstraintTB((sqlParser.DropConstraintTBContext) o);
                mn.dropConstraint(nameTB, nameCons);
             }

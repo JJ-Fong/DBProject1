@@ -3,6 +3,15 @@ package Visitor;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
+/*Universidad del Valle de Guatemala
+Prof. Sergio Molina
+Proyecto No. 1 - CC3040 Bases de Datos
+Integrantes: 
+Mario Barrientos - Carné No. 13039
+Javier Fong - Carné No. 13118
+William Fuentes - Carné No. 13324
+*/
+
 /**
  * This class provides an empty implementation of {@link sqlVisitor},
  * which can be extended to create a visitor which only needs to handle a subset

@@ -3,6 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+/*Universidad del Valle de Guatemala
+Prof. Sergio Molina
+Proyecto No. 1 - CC3040 Bases de Datos
+Integrantes: 
+Mario Barrientos - Carné No. 13039
+Javier Fong - Carné No. 13118
+William Fuentes - Carné No. 13324
+*/
+
 package GUI;
 
 import Visitor.AntLr;
@@ -21,11 +30,9 @@ import org.antlr.v4.runtime.tree.gui.TreeViewer;
  * @author Javier Fong
  */
 public class GUI extends javax.swing.JFrame {
-    JTree master;
-    JScrollPane output, masterPane, graphTree;
+    JScrollPane output,  graphTree;
     JTabbedPane mainPane; 
     JTextArea input;
-    JTable structure, data; 
     
     DBDataManager dbman; 
 
@@ -35,29 +42,18 @@ public class GUI extends javax.swing.JFrame {
      */
     public GUI() {
         initComponents();
-        master = new JTree();
         output = new JScrollPane();
-        masterPane = new JScrollPane();
         mainPane = new JTabbedPane(); 
         input = new JTextArea(); 
-        structure = new JTable();
-        data = new JTable(); 
         
         graphTree = new JScrollPane(); 
-        mainPane.addTab("Examinar", data);
-        mainPane.addTab("Estructura", structure); 
         mainPane.add("SQL", input); 
         mainPane.addTab("Graph", graphTree);
         
-        jSplitPane2.setRightComponent(mainPane);
+        jSplitPane1.setLeftComponent(mainPane);
         
-        jSplitPane2.setLeftComponent(masterPane);
-        masterPane.setViewportView(master);
-        
-        
-        jSplitPane2.setDividerLocation(0.3);
         jSplitPane1.setRightComponent(output);
-        
+        jSplitPane1.setDividerLocation(0.4);
         Border empty = BorderFactory.createEmptyBorder();
         jButton1.setBorder(empty);
         jButton2.setBorder(empty);

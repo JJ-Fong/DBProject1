@@ -9,6 +9,15 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+/*Universidad del Valle de Guatemala
+Prof. Sergio Molina
+Proyecto No. 1 - CC3040 Bases de Datos
+Integrantes: 
+Mario Barrientos - Carné No. 13039
+Javier Fong - Carné No. 13118
+William Fuentes - Carné No. 13324
+*/
+
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class sqlParser extends Parser {
 	static { RuntimeMetaData.checkVersion("4.4", RuntimeMetaData.VERSION); }

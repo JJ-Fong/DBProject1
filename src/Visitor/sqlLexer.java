@@ -9,6 +9,15 @@ import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.*;
 
+/*Universidad del Valle de Guatemala
+Prof. Sergio Molina
+Proyecto No. 1 - CC3040 Bases de Datos
+Integrantes: 
+Mario Barrientos - Carné No. 13039
+Javier Fong - Carné No. 13118
+William Fuentes - Carné No. 13324
+*/
+
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class sqlLexer extends Lexer {
 	static { RuntimeMetaData.checkVersion("4.4", RuntimeMetaData.VERSION); }
