@@ -441,6 +441,16 @@ public interface sqlListener extends ParseTreeListener {
 	 */
 	void exitRelationalExpGL(@NotNull sqlParser.RelationalExpGLContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link sqlParser#from}.
+	 * @param ctx the parse tree
+	 */
+	void enterFrom(@NotNull sqlParser.FromContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link sqlParser#from}.
+	 * @param ctx the parse tree
+	 */
+	void exitFrom(@NotNull sqlParser.FromContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code expNotAnd}
 	 * labeled alternative in {@link sqlParser#expr}.
 	 * @param ctx the parse tree
@@ -688,6 +698,16 @@ public interface sqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitConjuntoId(@NotNull sqlParser.ConjuntoIdContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link sqlParser#columnas}.
+	 * @param ctx the parse tree
+	 */
+	void enterColumnas(@NotNull sqlParser.ColumnasContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link sqlParser#columnas}.
+	 * @param ctx the parse tree
+	 */
+	void exitColumnas(@NotNull sqlParser.ColumnasContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link sqlParser#insert}.
 	 * @param ctx the parse tree

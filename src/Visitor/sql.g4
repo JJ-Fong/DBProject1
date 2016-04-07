@@ -390,10 +390,12 @@ delete
 ;
 
 query
-:	K_SELECT ('*' |	column (',' column)*) K_FROM ID (',' ID)* (K_WHERE  exp)? (K_ORDER  K_BY orderby (',' orderby)*)? 
+:	K_SELECT ('*' |	columnas) K_FROM from (K_WHERE  exp)? (K_ORDER  K_BY orderby (',' orderby)*)? 
 ;
 
+columnas: column (',' column)*;
 
+from: ID (',' ID)*;
 column
 :	ID('.' ID)?
 ;

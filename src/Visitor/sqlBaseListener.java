@@ -485,6 +485,18 @@ public class sqlBaseListener implements sqlListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterFrom(@NotNull sqlParser.FromContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFrom(@NotNull sqlParser.FromContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterExpNotAnd(@NotNull sqlParser.ExpNotAndContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -756,6 +768,18 @@ public class sqlBaseListener implements sqlListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitConjuntoId(@NotNull sqlParser.ConjuntoIdContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterColumnas(@NotNull sqlParser.ColumnasContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitColumnas(@NotNull sqlParser.ColumnasContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

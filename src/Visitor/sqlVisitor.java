@@ -267,6 +267,12 @@ public interface sqlVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRelationalExpGL(@NotNull sqlParser.RelationalExpGLContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link sqlParser#from}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFrom(@NotNull sqlParser.FromContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code expNotAnd}
 	 * labeled alternative in {@link sqlParser#expr}.
 	 * @param ctx the parse tree
@@ -413,6 +419,12 @@ public interface sqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitConjuntoId(@NotNull sqlParser.ConjuntoIdContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link sqlParser#columnas}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitColumnas(@NotNull sqlParser.ColumnasContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link sqlParser#insert}.
 	 * @param ctx the parse tree

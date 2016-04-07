@@ -605,7 +605,30 @@ public class DBDataManager implements dataManager{
 
     @Override
     public void dropColumn(String TableName, String columna) {
-        
+        if (actual != null) { 
+            if(existTable(TableName)) { 
+                if (existColumn(columna,TableName)) { 
+                    JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                    JSONObject table = (JSONObject) TableList.get(getIndex(TableName, TableList));
+                    
+                    JSONArray atributes = (JSONArray) table.get("atributes");
+                    JSONArray primary = (JSONArray) table.get("primary");
+                    if (existColumn(columna,primary)) {
+                        
+                    } else {
+                        int index = getIndex(columna, atributes); 
+                        atributes.remove(index);
+                        table.put("atributes", atributes);
+                    }
+                } else { 
+                    System.out.println("COLUMN "+columna+" DOESN'T EXIST IN TABLE "+TableName);
+                }
+            } else {
+                System.out.println("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
+            }
+        } else {
+            System.out.println("NO DB SELECTED");
+        }
     }
 
     @Override
@@ -716,6 +739,7 @@ public class DBDataManager implements dataManager{
     public void addConstraint(String TableName, Check check) { 
         
     }
+    
     @Override
     public void dropConstraint(String TableName, String idConstraint) {
         if (existTable(TableName)) {
@@ -824,6 +848,7 @@ public ArrayList<String> getTableColumns (String TableName){
         }
         return types;
     }
+    
     public ArrayList<Long> getColumnsIndex(String TableName){
         ArrayList<Long> indexs = new ArrayList<>();
         if (existTable(TableName)){
@@ -841,6 +866,7 @@ public ArrayList<String> getTableColumns (String TableName){
         }
         return indexs;
     }
+    
     public ArrayList<Long> getColumnsSize(String TableName){
         ArrayList<Long> size = new ArrayList<>();
         if (existTable(TableName)){
@@ -1451,6 +1477,7 @@ public ArrayList<String> getTableColumns (String TableName){
             System.out.println("El INSERT ("+insrows+") se ha realizado con exito.");
         }
     }
+    
     @Override
     public void updateTable (String nomTabla, ArrayList<String> columns, ArrayList values){
         boolean error = false;

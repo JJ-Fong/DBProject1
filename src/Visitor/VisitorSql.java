@@ -137,10 +137,10 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     @Override
     public T visitConstraints(sqlParser.ConstraintsContext ctx) {
         List <sqlParser.ConstraintContext> cons = ctx.constraint();
+        condition.clear();
         ArrayList<Constraint> consG = new ArrayList();
         ArrayList<primaryKey> primary = new ArrayList();
         String ni = "";
-        condition.clear();
         /*MI ARRAY DE PRIMARY KEYS*/
         ArrayList<primaryKey> pri = new ArrayList();
         /*MI ARRAY DE FOREIGN KEY*/
@@ -205,6 +205,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             Table tabla = new Table();
             tabla.setPrimaryKeys(null);
             tabla.setForeignKeys(null);
+            tabla.setChecks(null);
             return (T) tabla;
         }
         
@@ -522,7 +523,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             valu = (Value) this.visitFormatValue(o);
             values.add(valu);
         }
-        mn.insertIntoTable(nombreTB, columnas, values);
+        /*falta el mn.insert*/
         
         return (T)values; //To change body of generated methods, choose Tools | Templates.
     }
@@ -631,6 +632,76 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             condition.clear();
         }
         return (T)""; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitQuery(sqlParser.QueryContext ctx) {
+        String select = ctx.getChild(1).getText();
+        ArrayList namesTB = new ArrayList();
+        ArrayList <AtributoSelect> namesColumn = new ArrayList();
+        if(select.contains("*")){
+            sqlParser.FromContext tablas = (sqlParser.FromContext) ctx.getChild(3);
+            namesTB = (ArrayList) this.visitFrom(tablas);
+            String columnas = "all";
+            String tabla = "";
+            AtributoSelect atS = new AtributoSelect(tabla,columnas);
+            namesColumn.add(atS);
+            Select sel = new Select(namesTB,namesColumn);
+            return (T) sel;
+        }
+        else{
+            sqlParser.FromContext tablas = (sqlParser.FromContext) ctx.getChild(3);
+            namesTB = (ArrayList) this.visitFrom(tablas);
+            sqlParser.ColumnasContext sele = (sqlParser.ColumnasContext) ctx.getChild(1);
+            namesColumn = (ArrayList<AtributoSelect>) this.visitColumnas(sele);
+            Select sel = new Select(namesTB,namesColumn);
+            return (T) sel;
+        }
+        
+    }
+
+    @Override
+    public T visitColumnas(sqlParser.ColumnasContext ctx) {
+        ArrayList<AtributoSelect> atributos = new ArrayList();
+        List<sqlParser.ColumnContext> columna = ctx.column();
+        for(sqlParser.ColumnContext o : columna){
+            AtributoSelect temp = (AtributoSelect) this.visitColumn(o);
+            atributos.add(temp);
+        }
+        return (T)atributos; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitColumn(sqlParser.ColumnContext ctx) {
+       
+        if(ctx.getChildCount()>1){
+            String nameTB = ctx.getChild(0).getText();
+            String nameColumn = ctx.getChild(2).getText();
+            AtributoSelect atS = new AtributoSelect(nameTB,nameColumn);
+            return (T)atS;
+        }
+        else{
+            String nameTB ="";
+            String nameColumn = ctx.getChild(0).getText();
+            AtributoSelect atS = new AtributoSelect(nameTB,nameColumn);
+            return (T)atS;
+        }
+        
+    }
+
+    
+    
+    @Override
+    public T visitFrom(sqlParser.FromContext ctx) {
+        ArrayList namesTB = new ArrayList();
+        for(int i=0; i<ctx.getChildCount();i++){
+            if(!ctx.getChild(i).getText().equals(",") && !ctx.getChild(i).getText().equals("(") && !ctx.getChild(i).getText().equals(")")){
+                String nameTB = ctx.getChild(i).getText();
+                namesTB.add(nameTB);
+            }
+            
+        }
+        return (T)namesTB; //To change body of generated methods, choose Tools | Templates.
     }
 
     
