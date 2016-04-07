@@ -44,4 +44,7 @@ public  class DescriptiveErrorListener extends BaseErrorListener {
 	public void setError(String error){
 		this.error = error;
 	}
+        public boolean isEmpty() {
+            return (error.equals("")); 
+        }
 }

@@ -28,6 +28,8 @@ public class GUI extends javax.swing.JFrame {
     JTable structure, data; 
     
     DBDataManager dbman; 
+
+    AntLr LexPa;
     /**
      * Creates new form GUI
      */
@@ -62,6 +64,7 @@ public class GUI extends javax.swing.JFrame {
         jButton3.setBorder(empty);
         
         dbman = new DBDataManager(); 
+        LexPa = new AntLr(); 
     }
 
     /**
@@ -153,9 +156,12 @@ public class GUI extends javax.swing.JFrame {
         String programa =  input.getText();
         if(!"".equals(programa)){
             /*Inicio el lexer y parser*/
-            AntLr LexPa = new AntLr(programa);
+            LexPa.setProgra(programa);
             TreeViewer viewer = LexPa.Lexer_Parser();
             graphTree.setViewportView(viewer);
+            JTextArea tarea = new JTextArea(); 
+            tarea.setText(LexPa.toString());
+            output.setViewportView(tarea);
         } else System.out.println("No hay texto");
     }//GEN-LAST:event_jButton3ActionPerformed
 

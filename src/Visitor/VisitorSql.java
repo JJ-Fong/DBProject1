@@ -45,12 +45,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     @Override
     public T visitCreateDB(sqlParser.CreateDBContext ctx) {
         String nombreDB = ctx.getChild(2).getText();
-        if(mn.existDB(nombreDB)){
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nombreDB + " --- ya existe.");
-        }
-        else{
-            mn.createDB(nombreDB);
-        }
+        mn.createDB(nombreDB);
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -58,18 +53,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     public T visitAlterDB(sqlParser.AlterDBContext ctx) {
         String nomActual = ctx.getChild(2).getText();
         String nomNuevo = ctx.getChild(5).getText();
-        if(!mn.existDB(nomActual)){
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nomActual+ " --- no existe.");
-        }
-        else{
-            if(!mn.existDB(nomNuevo)){
-                mn.renameDB(nomActual,nomNuevo);
-            }
-            else{
-                errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nomActual+ " --- ya existe.");
-            }
-            
-        }
+        mn.renameDB(nomActual,nomNuevo);
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -87,50 +71,36 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     @Override
     public T visitDropDB(sqlParser.DropDBContext ctx) {
         String nombreDB = ctx.getChild(2).getText();
-        if(!mn.existDB(nombreDB)){
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nombreDB + " --- no existe.");
-        }
-        else{
-            mn.dropDB(nombreDB);
-        }
+        mn.dropDB(nombreDB);
         return (T) ""; //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public T visitUseDB(sqlParser.UseDBContext ctx) {
         String nombreDB = ctx.getChild(2).getText();
-        if(!mn.existDB(nombreDB)){
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nombreDB + " --- no existe.");
-        }
-        else{
-            mn.selectDB(nombreDB);
-            enUso=nombreDB;
-        }
+        mn.selectDB(nombreDB);
+        enUso=nombreDB;
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public T visitCreateTB(sqlParser.CreateTBContext ctx) {
         String nombreTB = ctx.getChild(2).getText();
-        if(!mn.existTable(nombreTB)){
-            int hijo = ctx.getChildCount()-2;
-            ParseTree ctxn = ctx.getChild(hijo);
-            Table tabla = (Table) this.visitConstraints((sqlParser.ConstraintsContext) ctxn);
-            tabla.setName(nombreTB);
-            ArrayList<Atributo> atributos = new ArrayList();
-            List <sqlParser.AtributoContext>atributosI = ctx.atributo();
+        
+        int hijo = ctx.getChildCount()-2;
+        ParseTree ctxn = ctx.getChild(hijo);
+        Table tabla = (Table) this.visitConstraints((sqlParser.ConstraintsContext) ctxn);
+        tabla.setName(nombreTB);
+        ArrayList<Atributo> atributos = new ArrayList();
+        List <sqlParser.AtributoContext>atributosI = ctx.atributo();
 
-            if(!atributosI.isEmpty()){
-                for(sqlParser.AtributoContext o: atributosI){
-                    atributos.add((Atributo)this.visitAtributo(o));  
-                }
+        if(!atributosI.isEmpty()){
+            for(sqlParser.AtributoContext o: atributosI){
+                atributos.add((Atributo)this.visitAtributo(o));  
             }
-            tabla.setAtributes(atributos);
-            mn.createTable(tabla);
         }
-        else{
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nombreTB + " --- ya existe.");
-        }
+        tabla.setAtributes(atributos);
+        mn.createTable(tabla);
         indice=1;
         
         return (T)""; //To change body of generated methods, choose Tools | Templates.
@@ -304,17 +274,6 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     public T visitRenameTB(sqlParser.RenameTBContext ctx) {
         String nomActual = ctx.getChild(2).getText();
         String nomNuevo = ctx.getChild(ctx.getChildCount()-1).getText();
-        if(!mn.existTable(nomActual)){
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La tabla: --- " + nomActual + " --- no existe.");
-        }
-        else{
-            if(mn.existTable(nomNuevo)){
-                errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La tabla: --- " + nomActual + " --- ya existe.");
-            }
-            else{
-                mn.renameTable(nomActual, nomNuevo);
-            }
-        }
         mn.renameTable(nomActual, nomNuevo);
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
@@ -322,27 +281,14 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     @Override
     public T visitDropTB(sqlParser.DropTBContext ctx) {
         String nameTB = ctx.getChild(2).getText();
-        if(mn.existTable(nameTB)){
-            mn.dropTable(nameTB);
-        }
-        else{
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La tabla: --- " + nameTB + " --- no existe.");
-        }
-        
+        mn.dropTable(nameTB);
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public T visitShowColums(sqlParser.ShowColumsContext ctx) {
         String nameTB= ctx.getChild(3).getText();
-        if(mn.existTable(nameTB)){
-            /*************OJO******************************** 
-         ************ SE DEBE UNIR A ALGO DE LA GUI**************/
-            mn.showColumns(nameTB);
-        }
-        else{
-            errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La tabla: --- " + nameTB + " --- no existe.");
-        }
+        mn.showColumns(nameTB);
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
     
@@ -628,7 +574,9 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         return (T)val; //To change body of generated methods, choose Tools | Templates.
     }
     
-    
+    public String toString() { 
+        return mn.toString();
+    }
     
     
 }

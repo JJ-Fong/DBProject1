@@ -18,11 +18,17 @@ import org.antlr.v4.runtime.tree.gui.TreeViewer;
  */
 public class AntLr {
     String progra;
-
+    String msg;
+    VisitorSql semantico;
     public AntLr(String progra) {
         this.progra = progra;
+        msg = "";
     }
 
+    public AntLr(){
+        semantico = new VisitorSql();
+    }; 
+    
     public String getProgra() {
         return progra;
     }
@@ -53,14 +59,22 @@ public class AntLr {
         DescriptiveErrorListener errorListener = new DescriptiveErrorListener();
         parser.addErrorListener(errorListener);
         
-        VisitorSql semantico = new VisitorSql();
+        
         
         /*Comienza el recorrido del arbol 
           y muestro el arbol que se genera*/
         ParseTree tree = parser.todo();
-        semantico.visit(tree);
+        if (errorListener.isEmpty()) { 
+            semantico.visit(tree);
+        }
         TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()),tree);
         viewer.setScale(1.5);
+        msg = semantico.toString(); 
+
         return viewer;
+    }
+    
+    public String toString() { 
+        return msg;
     }
 }

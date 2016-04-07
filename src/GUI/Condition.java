@@ -19,6 +19,7 @@ public class Condition {
     private boolean minValueInc=false;
     private boolean distinct=false;
     private boolean equal=false;
+    private String valueType; 
     private String value;
 
 
@@ -105,7 +106,12 @@ public class Condition {
     public void setNomeCons(String nomeCons) {
         this.nomeCons = nomeCons;
     }
-    
-    
-    
+
+    public String getValueType() {
+        return valueType;
+    }
+
+    public void setValueType(String valueType) {
+        this.valueType = valueType;
+    }
 }

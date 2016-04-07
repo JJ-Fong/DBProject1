@@ -90,7 +90,7 @@ public interface dataManager {
     
     Agrega una columna NUEVO en la tabla TableName
     */
-    public void addColumn(String TableName,Atributo nuevo, ArrayList<primaryKey> primaryKeys, ArrayList<foreignKey> foreignKeys, ArrayList<Condition> conditions);
+    public void addColumn(String TableName,Atributo nuevo, ArrayList<primaryKey> primaryKeys, ArrayList<foreignKey> foreignKeys, ArrayList<Check> conditions);
     
     /*
     params: TableName, nombre de la tabla

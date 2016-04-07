@@ -1,0 +1,1 @@
+[{"atributes":[{"index":1,"name":"id","type":"int","size":0},{"index":2,"name":"notas","type":"float","size":0},{"index":3,"name":"estudiante","type":"char","size":50}],"primary":[],"name":"notas","foreign":[],"size":0}]

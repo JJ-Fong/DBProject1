@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -76,7 +77,7 @@ public class DBDataManager implements dataManager{
             while ((i < jsonArray.size())&&(!found)) {
                 JSONObject db = (JSONObject) jsonArray.get(i);
                 String dbName = (String) db.get("name");
-                found = (name.equals(dbName)); 
+                found = (name.toUpperCase().equals(dbName.toUpperCase())); 
                 i++;
             }
         }
@@ -95,7 +96,7 @@ public class DBDataManager implements dataManager{
             bufw.write(text);
             bufw.close();
         } catch (Exception e) {
-            System.out.println(path+" not found");
+            msg.add(path+" not found");
         }
     }
     
@@ -120,13 +121,13 @@ public class DBDataManager implements dataManager{
                     
                     FileWriter file = new FileWriter("data\\"+name+"_metadata\\"+name+"MetaData.json");
                     file.close();
-                    System.out.println("DB "+name.toUpperCase()+" CREATED");
+                    msg.add("DB "+name.toUpperCase()+" CREATED");
                 }
             } catch (Exception e) {
-                    System.out.println("DB CREATION MALFUNCTION");
+                    msg.add("DB CREATION MALFUNCTION");
             }
         }  else {
-            System.out.println("DB "+name.toUpperCase()+" already exist");
+            msg.add("DB "+name.toUpperCase()+" already exist");
         }
     }
 
@@ -160,10 +161,10 @@ public class DBDataManager implements dataManager{
                 this.writeIn(DBList.toJSONString(), "data\\DBMetaData.json");
             
             } else {
-                System.out.println("DB "+newName+" already exist");
+                msg.add("DB "+newName+" already exist");
             }    
         } else { 
-            System.out.println("DB "+oldName+" doesn't exist");
+            msg.add("DB "+oldName+" doesn't exist");
         }
     }
     
@@ -190,9 +191,13 @@ public class DBDataManager implements dataManager{
     public ArrayList showDB() {
         ArrayList list = new ArrayList(); 
         JSONArray DBList = getJsonArray("data\\DBMetaData.json");
+        msg.add("BASES DE DATOS:");
+        msg.add("");
         for (Object obj: DBList) {
             JSONObject jobj = (JSONObject) obj;
-            list.add(jobj.get("name")); 
+            list.add(jobj.get("name"));
+            msg.add(String.valueOf(jobj.get("name")));
+            
         }
         return list; 
     }
@@ -206,14 +211,19 @@ public class DBDataManager implements dataManager{
             File file = new File((String) obj.get("path"));
             
             try {
-                this.deleteDirectory(file);
+                
+                int opc = JOptionPane.showConfirmDialog(null, "Seguro que desea eliminar la DB "+name+"?"); 
+                if (opc == 0) {
+                    this.deleteDirectory(file);
+                    DBList.remove(index); 
+                    this.writeIn(DBList.toJSONString(), "data\\DBMetaData.json");
+                    msg.add("DB "+name+" DELETED");
+                }
             } catch (IOException ex) {}
             
-            DBList.remove(index); 
-            this.writeIn(DBList.toJSONString(), "data\\DBMetaData.json");
-            System.out.println("DB "+name+" DELETED");
+            
         } else {
-            System.out.println("DB "+name+" doesn't exist");
+            msg.add("DB "+name+" doesn't exist");
         }
     }
 
@@ -228,9 +238,9 @@ public class DBDataManager implements dataManager{
             actual.setDirPath((String) obj.get("path"));
             actual.setTables((long)obj.get("tables"));
             
-            System.out.println("DB "+name+" SELECTED");
+            msg.add("DB "+name+" SELECTED");
         } else {
-            System.out.println("DB "+name+" doesn't exist");
+            msg.add("DB "+name+" doesn't exist");
         }
     }
 
@@ -250,7 +260,7 @@ public class DBDataManager implements dataManager{
             }
             return found;
         } else {
-            System.out.println("No DB selected");
+            msg.add("No DB selected");
             return false; 
         }
     }
@@ -285,7 +295,7 @@ public class DBDataManager implements dataManager{
                     atr.put("type", temp.getTipo()); 
                     atributes.add(atr); 
                 } else { 
-                    System.out.println("ATRIBUTE "+temp.getNombre()+" DECLARED MULTIPLE TIMES IN THE TABLE "+newTable.getName());
+                    msg.add("ATRIBUTE "+temp.getNombre()+" DECLARED MULTIPLE TIMES IN THE TABLE "+newTable.getName());
                 }
                 i++; 
             }
@@ -311,7 +321,7 @@ public class DBDataManager implements dataManager{
                                 obj.put("name", name);
                                 atrib.add(obj); 
                             } else {
-                                System.out.println("ID "+name+" IN PRIMARY KEY "+tempPK.getName()+" DOESN'T EXIST");
+                                msg.add("ID "+name+" IN PRIMARY KEY "+tempPK.getName()+" DOESN'T EXIST");
                             }
                             i++;
                         }
@@ -322,7 +332,7 @@ public class DBDataManager implements dataManager{
                         }
                     }
                 } else { 
-                    System.out.println("TABLE "+newTable.getName()+" CAN'T HAVE MULTIPLE PRIMARY KEYS");
+                    msg.add("TABLE "+newTable.getName()+" CAN'T HAVE MULTIPLE PRIMARY KEYS");
                 }    
             }
             table.put("primary", primary); 
@@ -350,7 +360,7 @@ public class DBDataManager implements dataManager{
                                 obj.put("name", atName);
                                 thisAtributes.add(obj); 
                             } else {
-                                System.out.println("COLUMN "+atName+" DOESN'T EXIST IN TABLE "+newTable.getName());
+                                msg.add("COLUMN "+atName+" DOESN'T EXIST IN TABLE "+newTable.getName());
                             }
                             j++;
                         }
@@ -376,31 +386,31 @@ public class DBDataManager implements dataManager{
                                             while (allGood && (k < references.size())) { 
                                                 JSONObject attr = (JSONObject) refPKAtributes.get(k); 
                                                 String attrName = (String) attr.get("name"); 
-                                                allGood = attrName.contains(attrName); 
+                                                allGood = references.contains(attrName); 
                                                 if (allGood) { 
                                                     JSONObject refAttr = new JSONObject(); 
                                                     refAttr.put("name", attrName); 
                                                     refAtributes.add(refAttr); 
                                                 } else {
-                                                    System.out.println(tempFk.getReferenceTable()+" PRIMARY KEY DOESN'T CONTAIN "+attrName+" ATRIBUTE");
+                                                    msg.add(tempFk.getReferenceTable()+" PRIMARY KEY DOESN'T CONTAIN "+attrName+" ATRIBUTE");
                                                 }
                                                 k++;
                                             }
                                         } else {
-                                            System.out.println("REFERENCE IDS DO NOT MATCH TABLE "+tempFk.getReferenceTable()+" PRIMARY KEY ATTRIBUTES");
+                                            msg.add("REFERENCE IDS DO NOT MATCH TABLE "+tempFk.getReferenceTable()+" PRIMARY KEY ATTRIBUTES");
                                         }
                                     } else {
-                                        System.out.println("REFERENCE TABLE "+tempFk.getReferenceTable()+" DOESN'T HAVE PRIMARY KEY CONSTRAINT");
+                                        msg.add("REFERENCE TABLE "+tempFk.getReferenceTable()+" DOESN'T HAVE PRIMARY KEY CONSTRAINT");
                                     }
                                 } else { 
-                                    System.out.println("REFERENCE IDS DO NOT MATCH LOCAL IDS IN QUANTITY");
+                                    msg.add("REFERENCE IDS DO NOT MATCH LOCAL IDS IN QUANTITY");
                                 }
                             } else { 
-                                System.out.println("REFERENCE TABLE "+tempFk.getReferenceTable()+" DOESN'T EXIST IN DB "+actual.getName());
+                                msg.add("REFERENCE TABLE "+tempFk.getReferenceTable()+" DOESN'T EXIST IN DB "+actual.getName());
                             }
                         }
                     } else {
-                        System.out.println(tempFk.getName()+" ID DECLARED MULTIPLE TIMES");
+                        msg.add(tempFk.getName()+" ID DECLARED MULTIPLE TIMES");
                     }
                     //check if primary key and local id are the same type
                     if (allGood) {
@@ -420,13 +430,13 @@ public class DBDataManager implements dataManager{
                             String refType = (String) refA.get("type");
                             
                             allGood = thisType.equals(refType); 
-                            if (!allGood) System.out.println(String.valueOf(thisA.get("name"))+" ISN'T THE SAME TYPE OF "+String.valueOf(thisA.get("name")));
+                            if (!allGood) msg.add(String.valueOf(thisA.get("name"))+" ISN'T THE SAME TYPE OF "+String.valueOf(thisA.get("name")));
                             
                             if (allGood && (thisType.equals("char"))) { 
-                                String thisSize = (String) thisA.get("size");
-                                String refSize = (String) refA.get("size");
-                                allGood = (thisSize.equals(refSize)); 
-                                if (!allGood) System.out.println(String.valueOf(thisA.get("name"))+" ISN'T THE SAME SIZE OF "+String.valueOf(thisA.get("name")));
+                                int thisSize = (int) thisA.get("size");
+                                long refSize = (long) refA.get("size");
+                                allGood = (thisSize == refSize); 
+                                if (!allGood) msg.add(String.valueOf(thisA.get("name"))+" ISN'T THE SAME SIZE OF "+String.valueOf(thisA.get("name")));
                             }
                             j++;
                         }
@@ -440,9 +450,70 @@ public class DBDataManager implements dataManager{
                     }
                     i++;
                 }
+                //CHECK VALIDATION 
+                if (allGood) { 
+                    ArrayList<Check> checksDecl = new ArrayList<>(); 
+                    if (newTable.getChecks() != null) checksDecl = newTable.getChecks();
+                    int j = 0; 
+                    while ( allGood && (j < checksDecl.size())) {
+                        Check tempChk = checksDecl.get(j); 
+                        allGood = ! (existColumn(tempChk.getNombreCons(),primary)||existColumn(tempChk.getNombreCons(),foreign)||existColumn(tempChk.getNombreCons(),condition)); 
+                        if (allGood) {
+                            JSONObject ConditionObj = new JSONObject(); 
+                            ArrayList<Condition> conditionsArray = tempChk.getCondi();
+                            int k = 0; 
+                            while( allGood && ( k < conditionsArray.size())) {
+                                Condition tempCon = conditionsArray.get(k); 
+                                String conColumn = tempCon.getColumn();
+                                //existe la columna a la que se le impone el check
+                                allGood = existColumn(conColumn, atributes); 
+                                if (allGood) { 
+                                    JSONObject column = (JSONObject) atributes.get(getIndex(conColumn,atributes));
+                                    String columnType = (String) column.get("type"); 
+                                    //Si es value no es una variable
+                                    if (!tempCon.getValueType().equals("id")) {
+                                        allGood = columnType.equals(tempCon.getValueType());
+                                        if (allGood) {
+                                            ConditionObj.put("id", tempCon.getId());
+                                            ConditionObj.put("column", tempCon.getColumn());
+                                            ConditionObj.put("value", tempCon.getValue());
+                                            ConditionObj.put("valueType", tempCon.getValueType());
+                                            if (tempCon.isDistinct()) ConditionObj.put("symbol", "<>"); 
+                                            if (tempCon.isEqual()) ConditionObj.put("symbol", "="); 
+                                            if (tempCon.isMinValue()) ConditionObj.put("symbol", ">"); 
+                                            if (tempCon.isMinValueInc()) ConditionObj.put("symbol", ">="); 
+                                            if (tempCon.isMaxValue()) ConditionObj.put("symbol", "<"); 
+                                            if (tempCon.isMaxValueInc()) ConditionObj.put("symbol", "<=");
+                                            String exp = tempChk.getCheckString();
+                                            toPostFix pf = new toPostFix(); 
+                                            
+                                            condition.add(ConditionObj);
+                                        } else {
+                                            if (tempCon.getValueType().equals("float") || tempCon.getValueType().equals("int") ) {
+                                                if (columnType.equals("float") || columnType.equals("int")) {
+                                                    allGood = true; 
+                                                }
+                                            } else { 
+                                                System.out.println(conColumn+" and "+tempCon.getValue()+" are not the same type nor can they be cast");
+                                            }
+                                        }
+                                    } else {
+                                        
+                                    }
+                                } else {
+                                    System.out.println("COLUMN "+conColumn+" IN CHECK "+tempChk.getNombreCons()+" DOESN'T EXIST");
+                                }
+                            }
+                        } else {
+                            System.out.println(tempChk.getNombreCons()+" ID ALREADY EXIST IN TABLE "+newTable.getName()); 
+                        }
+                        j++;
+                    }
+                }
                 table.put("atributes", atributes);
                 table.put("primary", primary); 
                 table.put("foreign", foreign);
+                table.put("condition", condition);
             }
             if (allGood) { 
                 try {
@@ -454,14 +525,14 @@ public class DBDataManager implements dataManager{
                     
                     FileWriter file = new FileWriter(actual.getDirPath()+"\\"+tName+".json");
                     file.close();
-                    System.out.println("TABLE "+tName.toUpperCase()+" CREATED");
+                    msg.add("TABLE "+tName.toUpperCase()+" CREATED");
                     }
                 } catch (Exception e) {
-                        System.out.println("TABLE CREATION MALFUNCTION");
+                        msg.add("TABLE CREATION MALFUNCTION");
                 }
             }
         } else { 
-            System.out.println("TABLE "+tName+" ALREADY EXIST IN DB "+actual.getName()); 
+            msg.add("TABLE "+tName+" ALREADY EXIST IN DB "+actual.getName()); 
         }
         
         
@@ -494,53 +565,126 @@ public class DBDataManager implements dataManager{
     @Override
     public void renameTable(String TableName, String newTableName) {
         if (existTable(TableName)) { 
-            try {
+            if (!existTable(newTableName)) {
+                    
                 JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
                 int index = getIndex(TableName,TableList);
                 JSONObject tabla = (JSONObject) TableList.get(index);
                 tabla.put("name", newTableName);
-               
+
                 TableList.remove(index);
                 TableList.add(tabla);
-                
+
                 this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
-                File file = new File(actual.getDirPath()+"\\"+TableName+"MetaData.json");
-                file.delete();
-                
-                FileWriter filew = new FileWriter(actual.getDirPath()+"\\"+newTableName+"MetaData.json");
-                filew.close();
-            } catch (IOException ex) {
+                File file = new File(actual.getDirPath()+"\\"+TableName+".json");
+                File filew = new File(actual.getDirPath()+"\\"+newTableName+".json");
+                file.renameTo(filew);
+                    
+            } else {
+                msg.add("TABLE "+newTableName+" ALREADY EXIST");
             }
-            
         } else {
-            System.out.println("TABLE "+TableName+" DOESN'T EXIST");
+            msg.add("TABLE "+TableName+" DOESN'T EXIST");
         }
     }
 
     @Override
     public void dropColumn(String TableName, String columna) {
-    
+        
     }
 
     @Override
     public void dropTable(String TableName) {
-    
+        if (existTable(TableName)) { 
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int tableIndex = getIndex(TableName, TableList); 
+            JSONObject table = (JSONObject) TableList.get(tableIndex); 
+            JSONArray primary = (JSONArray) table.get("primary");
+            
+            boolean related = false; 
+            if (primary.size() > 0) {
+                int i = 0; 
+                while(!related && (i < TableList.size())){
+                    JSONObject tempTable = (JSONObject) TableList.get(i);
+                    JSONArray foreign = (JSONArray) tempTable.get("foreign");
+                    int j = 0; 
+                    while (!related && (j < foreign.size())) {
+                        JSONObject tempFk = (JSONObject) foreign.get(j); 
+                        String refTable = (String) tempFk.get("table");
+                        related = TableName.equals(refTable);
+                        j++;
+                    }
+                    i++;
+                }
+            }
+            
+            if (!related) { 
+                TableList.remove(tableIndex);
+                this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                File file = new File (actual.getDirPath()+"\\"+TableName+".json");
+                file.delete();
+                System.out.println("TABLE "+TableName+" DROPPED SUCCESFULLY");
+            } else {
+                System.out.println("RELATIONSHIP FOUND WITH THIS TABLE AND OTHER TABLE");
+            }
+        } else {
+            System.out.println("TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
+        }
     }
 
     @Override
     public ArrayList<Table> showTables() {
+        ArrayList list = new ArrayList(); 
+        if (actual != null) {
+            JSONArray DBList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            msg.add("TABLAS:");
+            msg.add("");
+            int c = DBList.size();
+            for (Object obj: DBList) {
+                JSONObject jobj = (JSONObject) obj;
+                String cName = (String) jobj.get("name");
+                list.add((cName));
+                msg.add((cName));
+            } 
+            if (c == 0) msg.add("DB "+actual.getName()+" IS EMPTY");
+        } else {
+            msg.add("DATABASE NOT SELECTED");
+        }
+        return list; 
         
-        return new ArrayList(); 
     }
 
     @Override
     public ArrayList<Atributo> showColumns(String TableName) {
-        
-        return new ArrayList(); 
+        ArrayList list = new ArrayList(); 
+        if (actual != null) {
+        JSONArray DBList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+        if (existTable(TableName)) { 
+            msg.add("ESTRUCTURA TABLA "+TableName+":");
+            msg.add("");
+            for (Object obj: DBList) {
+                JSONObject jobj = (JSONObject) obj;
+                String objName = (String) jobj.get("name"); 
+                if (objName.equals(TableName)) { 
+                    JSONArray atributes = (JSONArray) jobj.get("atributes"); 
+                    for (Object atr: atributes) {
+                        JSONObject atobj = (JSONObject) atr;
+                        list.add(atobj.get("name"));
+                        msg.add(String.valueOf(atobj.get("name")));
+                    }
+                } 
+            } 
+        } else {
+           msg.add(" TABLE "+TableName+" DOESN'T EXIST IN DB "+actual.getName());
+        }
+        } else {
+            msg.add("DATABASE NOT SELECTED");
+        }
+        return list; 
     }
 
     @Override
-    public void addColumn(String TableName, Atributo nuevo, ArrayList<primaryKey> primaryKeys, ArrayList<foreignKey> foreignKeys, ArrayList<Condition> conditions) {
+    public void addColumn(String TableName, Atributo nuevo, ArrayList<primaryKey> primaryKeys, ArrayList<foreignKey> foreignKeys, ArrayList<Check> conditions) {
     
     }
 
@@ -554,11 +698,71 @@ public class DBDataManager implements dataManager{
     
     }
 
+    public void addConstraint(String TableName, Check check) { 
+        
+    }
     @Override
     public void dropConstraint(String TableName, String idConstraint) {
+        if (existTable(TableName)) {
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int tableIndex = getIndex(TableName,TableList); 
+            JSONObject table = (JSONObject) TableList.get(tableIndex); 
+            
+            JSONArray primary = (JSONArray) table.get("primary"); 
+            JSONArray foreign = (JSONArray) table.get("foreign"); 
+            JSONArray condition = (JSONArray) table.get("condition"); 
+            
+            if (existColumn(idConstraint, primary)) {
+                boolean found = false;
+                String relTable = ""; 
+                for (int i = 0; i < TableList.size(); i++) { 
+                    JSONObject tempCond = (JSONObject) TableList.get(i); 
+                    JSONArray tempForeign = (JSONArray) tempCond.get("foreign"); 
+                    for (int j = 0; j < tempForeign.size(); j++){
+                        JSONObject ForeignObj = (JSONObject) tempForeign.get(j); 
+                        JSONArray references = (JSONArray) ForeignObj.get("references"); 
+                        found = (existColumn(idConstraint,references)); 
+                        if (found) relTable = (String) tempCond.get("name");
+                    }
+                }
+                if (!found) { 
+                    primary.remove(0); 
+                    table.put("primary", primary);
+                    System.out.println("PRIMARY KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+                } else {
+                    System.out.println("PRIMARY KEY "+idConstraint+" CANT BE DROPED, IT IS FOREIGN KEY IN TABLE "+relTable);
+                }
+            } else if (existColumn(idConstraint, foreign)) {
+                int index = getIndex(idConstraint, foreign); 
+                foreign.remove(index); 
+                table.put("foreign", foreign);
+                System.out.println("FOREIGN KEY "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+            } else if (existColumn(idConstraint, condition)) { 
+                int index = getIndex(idConstraint, condition); 
+                condition.remove(index);
+                table.put("condition", condition);
+                System.out.println("CONDITION "+idConstraint+" REMOVED SUCCESFULLY FROM TABLE "+TableName);
+            }
+            
+            TableList.remove(tableIndex);
+            TableList.add(table); 
+            this.writeIn(TableList.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+        } else {
+            System.out.println(TableName+" DOESN'T EXIST IN DB "+actual.getName());
+        }
+    }
     
+    public String toString() { 
+        String finalMsg = "";
+        for (int i = 0; i < msg.size(); i++) finalMsg = finalMsg.concat(msg.get(i)+"\n");
+        msg.clear();
+        return finalMsg; 
     }
     
     
+    private boolean eval(ArrayList<Value> valores, Check conditions) {
+        
+        return false; 
+    }
     
     }
