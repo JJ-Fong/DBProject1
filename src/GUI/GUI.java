@@ -150,13 +150,13 @@ public class GUI extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
-        String progra =  input.getText();
-        if(!"".equals(progra)){
+        String programa =  input.getText();
+        if(!"".equals(programa)){
             /*Inicio el lexer y parser*/
-            AntLr LexPa = new AntLr(progra);
+            AntLr LexPa = new AntLr(programa);
             TreeViewer viewer = LexPa.Lexer_Parser();
             graphTree.setViewportView(viewer);
-        }
+        } else System.out.println("No hay texto");
     }//GEN-LAST:event_jButton3ActionPerformed
 
     /**

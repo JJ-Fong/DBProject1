@@ -10,34 +10,27 @@ package GUI;
  * @author mariobsdd
  */
 public class Condition {
-    
-    private String id;
+    String nomeCons;
+    private int id;
     private String column;
-    private boolean maxValue;
-    private boolean maxValueInc;
-    private boolean minValue;
-    private boolean minValueInc;
-    private boolean distinct;
-    private boolean equal;
+    private boolean maxValue=false;
+    private boolean maxValueInc=false;
+    private boolean minValue=false;
+    private boolean minValueInc=false;
+    private boolean distinct=false;
+    private boolean equal=false;
     private String value;
 
-    public Condition(String id, String column, boolean maxValue, boolean maxValueInc, boolean minValue, boolean minValueInc, boolean distinct, boolean equal, String value) {
-        this.id = id;
-        this.column = column;
-        this.maxValue = maxValue;
-        this.maxValueInc = maxValueInc;
-        this.minValue = minValue;
-        this.minValueInc = minValueInc;
-        this.distinct = distinct;
-        this.equal = equal;
-        this.value = value;
+
+
+    public Condition() {
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -103,6 +96,14 @@ public class Condition {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public String getNomeCons() {
+        return nomeCons;
+    }
+
+    public void setNomeCons(String nomeCons) {
+        this.nomeCons = nomeCons;
     }
     
     

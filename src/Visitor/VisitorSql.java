@@ -5,7 +5,6 @@
  */
 package Visitor;
 
-
 import GUI.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +19,9 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     ArrayList errores = new ArrayList();
     String enUso="";
     DBDataManager mn = new DBDataManager();
+    ArrayList<Condition> condition = new ArrayList();
     int indice = 0;
+    int indiceC=1;
     
     public ArrayList getErrores() {
         return errores;
@@ -125,11 +126,13 @@ public class VisitorSql <T> extends sqlBaseVisitor{
                 }
             }
             tabla.setAtributes(atributos);
+            mn.createTable(tabla);
         }
         else{
             errores.add("ERROR: " + "------Linea "+ctx.getStart().getLine() + " -----"+ "La base de datos: --- " + nombreTB + " --- ya existe.");
         }
         indice=1;
+        
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -166,14 +169,18 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         List <sqlParser.ConstraintContext> cons = ctx.constraint();
         ArrayList<Constraint> consG = new ArrayList();
         ArrayList<primaryKey> primary = new ArrayList();
-        
+        String ni = "";
         /*MI ARRAY DE PRIMARY KEYS*/
         ArrayList<primaryKey> pri = new ArrayList();
         /*MI ARRAY DE FOREIGN KEY*/
         ArrayList<foreignKey> fore = new ArrayList();
+        /*MI ARRAY DE CHECKS*/
+        ArrayList<Check> check = new ArrayList();
         if(!cons.isEmpty()){
             for(sqlParser.ConstraintContext o: cons){
-                if(o.getChild(1).getText().equals("primary")){
+                String esC = o.getChild(1).getText();
+                esC=esC.toUpperCase();
+                if(esC.equals("PRIMARY")){
                     String nameC=o.getChild(0).getText();
                     ArrayList nombres = new ArrayList();
                     ArrayList<Constraint> temp = (ArrayList<Constraint>) this.visitCPK((sqlParser.CPKContext)o);
@@ -183,7 +190,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
                     primaryKey pr = new primaryKey(nameC,nombres);
                     primary.add(pr);
                 }
-                if(o.getChild(1).getText().equals("foreign")){
+                if(esC.equals("FOREIGN")){
                     String nameC=o.getChild(0).getText();
                     ArrayList nombresPropios = new ArrayList();
                     ArrayList nomAtri = new ArrayList();
@@ -192,7 +199,9 @@ public class VisitorSql <T> extends sqlBaseVisitor{
                     for (Constraint temp1 : temp) {
                         nombresPropios.add(temp1.getNombre());
                     }
-                    if(o.getChild(o.getChildCount()-1).getText().contains("references")){
+                    esC = o.getChild(o.getChildCount()-1).getText();
+                    esC=esC.toUpperCase();
+                    if(esC.contains("REFERENCES")){
                         ArrayList<Constraint> temp2 = (ArrayList<Constraint>) this.visitReferences((sqlParser.ReferencesContext)o.getChild(o.getChildCount()-1));
                         for (Constraint temp3 : temp2) {
                             nomAtri.add(temp3.getNombre());
@@ -202,11 +211,22 @@ public class VisitorSql <T> extends sqlBaseVisitor{
                     foreignKey fo = new foreignKey(nameC,nombresPropios,nameT,nomAtri);
                     fore.add(fo);
                 }
+                
+                if(esC.equals("CHECK")){
+                    String nameC=o.getChild(0).getText();
+                    ni = (String)this.visitExp((sqlParser.ExpContext) o.getChild(2));
+                    Condition g = new Condition();
+                    Check ch = new Check(condition,nameC);
+                    ch.setCheckString(ni);
+                    check.add(ch);
+                    indiceC=1;
+                }
             }
             Table tabla = new Table();
             tabla.setPrimaryKeys(primary);
             tabla.setForeignKeys(fore);
-
+            tabla.setChecks(check);
+            condition.clear();
             return (T) tabla; //To change body of generated methods, choose Tools | Templates.
 
         }
@@ -216,6 +236,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             tabla.setForeignKeys(null);
             return (T) tabla;
         }
+        
     }
 
     @Override
@@ -376,8 +397,68 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     
     /*SOLO ESTE FALTA PARA COMPLETAR MI TAREA*/
     @Override
-    public Object visitAddConstraintTB(sqlParser.AddConstraintTBContext ctx) {
-        return super.visitAddConstraintTB(ctx); //To change body of generated methods, choose Tools | Templates.
+    public T visitAddConstraintTB(sqlParser.AddConstraintTBContext ctx) {
+        ArrayList<Constraint> consG = new ArrayList();
+        ArrayList<primaryKey> primary = new ArrayList();
+        
+        String ni="";
+        /*MI ARRAY DE PRIMARY KEYS*/
+        ArrayList<primaryKey> pri = new ArrayList();
+        /*MI ARRAY DE FOREIGN KEY*/
+        ArrayList<foreignKey> fore = new ArrayList();
+        /*MI ARRAY DE CHECKS*/
+        ArrayList<Check> check = new ArrayList();
+        sqlParser.ConstraintContext o = (sqlParser.ConstraintContext) ctx.getChild(ctx.getChildCount()-1);
+        String esC = o.getChild(1).getText();
+        esC=esC.toUpperCase();
+        if(esC.equals("PRIMARY")){
+            String nameC=o.getChild(0).getText();
+            ArrayList nombres = new ArrayList();
+            ArrayList<Constraint> temp = (ArrayList<Constraint>) this.visitCPK((sqlParser.CPKContext)o);
+            for (Constraint temp1 : temp) {
+                nombres.add(temp1.getNombre());                    
+            }
+            primaryKey pr = new primaryKey(nameC,nombres);
+            primary.add(pr);
+        }
+        if(esC.equals("FOREIGN")){
+            String nameC=o.getChild(0).getText();
+            ArrayList nombresPropios = new ArrayList();
+            ArrayList nomAtri = new ArrayList();
+            String nameT = null;
+            ArrayList<Constraint> temp = (ArrayList<Constraint>) this.visitCFK((sqlParser.CFKContext)o);
+            for (Constraint temp1 : temp) {
+                nombresPropios.add(temp1.getNombre());
+            }
+            esC = o.getChild(o.getChildCount()-1).getText();
+            esC=esC.toUpperCase();
+            if(esC.contains("REFERENCES")){
+                ArrayList<Constraint> temp2 = (ArrayList<Constraint>) this.visitReferences((sqlParser.ReferencesContext)o.getChild(o.getChildCount()-1));
+                for (Constraint temp3 : temp2) {
+                    nomAtri.add(temp3.getNombre());
+                    nameT=temp3.getNameT();
+                }
+            }
+            foreignKey fo = new foreignKey(nameC,nombresPropios,nameT,nomAtri);
+            fore.add(fo);
+        }
+
+        if(esC.equals("CHECK")){
+            String nameC=o.getChild(0).getText();
+            ni = (String)this.visitExp((sqlParser.ExpContext) o.getChild(2));
+            Condition g = new Condition();
+            Check ch = new Check(condition,nameC);
+            ch.setCheckString(ni);
+            check.add(ch);
+            indiceC=1;
+        }
+        Table tabla = new Table();
+        tabla.setPrimaryKeys(primary);
+        tabla.setForeignKeys(fore);
+        tabla.setChecks(check);
+        condition.clear();
+        indiceC=1;
+        return (T) tabla; //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -399,6 +480,154 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         mn.showTables();
         return (T)""; //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    public T visitExp(sqlParser.ExpContext ctx) {
+        String cadena = ctx.getText();
+        System.out.println(cadena);
+        for(int i=0; i<ctx.getChildCount();i++){
+            this.visit(ctx.getChild(i));
+        }
+        return (T) cadena;
+    }
+
+    @Override
+    public T visitExpEq(sqlParser.ExpEqContext ctx) {
+        String nameCol = ctx.getChild(0).getText();
+        String operador  = ctx.getChild(1).getText();
+        String valor = ctx.getChild(2).getText();
+        Condition cond = new Condition();
+        cond.setId(indiceC);
+        cond.setColumn(nameCol);
+        cond.setValue(valor);
+        if(operador.equals("=")){
+            cond.setEqual(true);
+        }
+        else{
+            cond.setDistinct(true);
+        }
+        indiceC=indiceC+1;
+        condition.add(cond);
+        return (T)cond; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitExpGL(sqlParser.ExpGLContext ctx) {
+        String nameCol = ctx.getChild(0).getText();
+        String operador  = ctx.getChild(1).getText();
+        String valor = ctx.getChild(2).getText();
+        Condition cond = new Condition();
+        cond.setId(indiceC);
+        cond.setColumn(nameCol);
+        cond.setValue(valor);
+        if(operador.equals(">")){
+            cond.setMinValue(true);
+        }
+        if(operador.equals("<")){
+            cond.setMaxValue(true);
+        }
+        if(operador.equals(">=")){
+            cond.setMinValueInc(true);
+        }
+        if(operador.equals("<=")){
+            cond.setMaxValue(true);
+        }
+        indiceC=indiceC+1;
+        condition.add(cond);
+        return (T)""; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    
+    @Override
+    public T visitLiteralString(sqlParser.LiteralStringContext ctx) {
+        String nameCol = ctx.getText();
+        return (T)nameCol; //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    
+    
+    /*PARA EL DML*/
+
+    @Override
+    public T visitInsert(sqlParser.InsertContext ctx) {
+        String nombreTB = ctx.getChild(1).getText();
+        ArrayList columnas = new ArrayList();
+        ArrayList<Value> values = new ArrayList();
+        List<sqlParser.FormatValueContext> val = ctx.formatValue();
+        if(!ctx.getChild(3).getText().toUpperCase().equals("VALUES")){
+            columnas = (ArrayList)(T)this.visitVariosId((sqlParser.VariosIdContext) ctx.getChild(3));
+        }
+        for(sqlParser.FormatValueContext o:val){
+            Value valu;
+            valu = (Value) this.visitFormatValue(o);
+            values.add(valu);
+        }
+        
+        return (T)values; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitVariosId(sqlParser.VariosIdContext ctx) {
+        ArrayList ids = new ArrayList();
+            for(int i=0; i<ctx.getChildCount();i++){
+            if(!ctx.getChild(i).getText().equals(",") && !ctx.getChild(i).getText().equals("(") && !ctx.getChild(i).getText().equals(")")){
+                ids.add(ctx.getChild(i).getText());
+            }
+        }
+        return (T)ids; //To change body of generated methods, choose Tools | Templates.
+    }
+
+   
+
+    @Override
+    public T visitFormatValue(sqlParser.FormatValueContext ctx) {
+        String text = ctx.getText();
+        for(int i=0; i<ctx.getChildCount();i++){
+            return (T) this.visit(ctx.getChild(i));
+        }
+        return (T) ""; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitEntero(sqlParser.EnteroContext ctx) {
+        String tipo = "int";
+        String value = ctx.getText();
+        Value val = new Value(tipo,value);
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitCharacter(sqlParser.CharacterContext ctx) {
+        String tipo = "char";
+        String value = ctx.getText();
+        Value val = new Value(tipo,value);
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitDecimal(sqlParser.DecimalContext ctx) {
+        String tipo = "float";
+        String value = ctx.getText();
+        Value val = new Value(tipo,value);
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitFecha(sqlParser.FechaContext ctx) {
+        String tipo = "date";
+        String value = ctx.getText();
+        Value val = new Value(tipo,value);
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitNullType(sqlParser.NullTypeContext ctx) {
+        String tipo = "null";
+        String value = ctx.getText();
+        Value val = new Value(tipo,value);
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
+    }
+    
     
     
     

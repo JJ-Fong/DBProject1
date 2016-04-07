@@ -296,9 +296,10 @@ unifactor
 factor
 :	literal																	#expLiteral
 |	'(' exp ')'																#expParentheses
-| 	ID ('.'ID)?																#expID
+| 	literalString															#expID
 ;
 
+literalString: ID ('.'ID)?;
 literal
 :	formatValue
 ;
@@ -339,8 +340,10 @@ relationalExp
 ;
 
 insert
-:	K_INSERT  K_INTO  ID ('(' (ID (',' ID )*)* ')')? K_VALUES '(' (formatValue (',' formatValue )*)* ')'
+:	K_INSERT  K_INTO  ID variosId K_VALUES '(' (formatValue (',' formatValue )*)* ')'
 ;
+
+variosId:('(' (ID (',' ID )*)* ')')?;
 
 formatValue
 :	entero
