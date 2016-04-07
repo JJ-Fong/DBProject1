@@ -140,6 +140,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         ArrayList<Constraint> consG = new ArrayList();
         ArrayList<primaryKey> primary = new ArrayList();
         String ni = "";
+        condition.clear();
         /*MI ARRAY DE PRIMARY KEYS*/
         ArrayList<primaryKey> pri = new ArrayList();
         /*MI ARRAY DE FOREIGN KEY*/
@@ -196,7 +197,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             tabla.setPrimaryKeys(primary);
             tabla.setForeignKeys(fore);
             tabla.setChecks(check);
-            condition.clear();
+            
             return (T) tabla; //To change body of generated methods, choose Tools | Templates.
 
         }
