@@ -143,5 +143,24 @@ public interface dataManager {
     
     //Metodos para DML
     
+        /*
+    params: NomTabla (nombre de la Tabla), columns (atributos de cada tabla), values(arreglo de valores de cada tabla con su tipo y su ID)
+    Hace el insert de todos los registros en una tabla.
+    */
+    public void insertIntoTable(String nomTabla, ArrayList<String> columns, ArrayList values);
     
+    /*
+    params: NomTabla (nombre de la Tabla), columns (atributos de cada tabla), values(arreglo de valores de cada tabla con su tipo y su ID)
+    Hace el update de los registros seleccionados en una tabla.
+    */
+
+//Falta ver la condicion del WHERE
+    public void updateTable (String nomTabla, ArrayList<String> columns, ArrayList values);
+    
+    /*
+    params: NomTabla (nombre de la Tabla)
+    Hace el delelte de todos los registros seleccionados en una tabla.
+    */
+    //Falta ver la condicion del WHERE
+    public void deleteFromTable (String nomTabla);
 }

@@ -442,10 +442,15 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         String nameCol = ctx.getChild(0).getText();
         String operador  = ctx.getChild(1).getText();
         String valor = ctx.getChild(2).getText();
+        Value val = new Value();
+        sqlParser.ExpNotGlContext hijo1 = (sqlParser.ExpNotGlContext) ctx.getChild(2);
+        val= (Value)this.visitExpNotGl(hijo1);
+        String type = val.getTipo();
         Condition cond = new Condition();
         cond.setId(indiceC);
         cond.setColumn(nameCol);
         cond.setValue(valor);
+        cond.setValueType(type);
         if(operador.equals("=")){
             cond.setEqual(true);
         }
@@ -462,10 +467,15 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         String nameCol = ctx.getChild(0).getText();
         String operador  = ctx.getChild(1).getText();
         String valor = ctx.getChild(2).getText();
+        Value val = new Value();
+        sqlParser.ExpFactorContext hijo1 = (sqlParser.ExpFactorContext) ctx.getChild(2);
+        val= (Value)this.visitExpFactor(hijo1);
+        String type = val.getTipo();
         Condition cond = new Condition();
         cond.setId(indiceC);
         cond.setColumn(nameCol);
         cond.setValue(valor);
+        cond.setValueType(type);
         if(operador.equals(">")){
             cond.setMinValue(true);
         }
@@ -487,7 +497,10 @@ public class VisitorSql <T> extends sqlBaseVisitor{
     @Override
     public T visitLiteralString(sqlParser.LiteralStringContext ctx) {
         String nameCol = ctx.getText();
-        return (T)nameCol; //To change body of generated methods, choose Tools | Templates.
+        Value val = new Value();
+        val.setTipo("id");
+        val.setValue(ctx.getText());
+        return (T)val; //To change body of generated methods, choose Tools | Templates.
     }
     
     
@@ -496,7 +509,7 @@ public class VisitorSql <T> extends sqlBaseVisitor{
 
     @Override
     public T visitInsert(sqlParser.InsertContext ctx) {
-        String nombreTB = ctx.getChild(1).getText();
+        String nombreTB = ctx.getChild(2).getText();
         ArrayList columnas = new ArrayList();
         ArrayList<Value> values = new ArrayList();
         List<sqlParser.FormatValueContext> val = ctx.formatValue();
@@ -508,9 +521,11 @@ public class VisitorSql <T> extends sqlBaseVisitor{
             valu = (Value) this.visitFormatValue(o);
             values.add(valu);
         }
+        mn.insertIntoTable(nombreTB, columnas, values);
         
         return (T)values; //To change body of generated methods, choose Tools | Templates.
     }
+
 
     @Override
     public T visitVariosId(sqlParser.VariosIdContext ctx) {
@@ -574,6 +589,53 @@ public class VisitorSql <T> extends sqlBaseVisitor{
         return (T)val; //To change body of generated methods, choose Tools | Templates.
     }
     
+    @Override
+    public T visitUpdate(sqlParser.UpdateContext ctx) {
+        String nameTB = ctx.getChild(1).getText();
+        /*Es una lista de asignaiones que se hicieron el eupdate*/
+        ArrayList<Asignacion> asigna = new ArrayList();
+        String ni="";
+        List<sqlParser.AsignacionContext> asig = ctx.asignacion();
+        for(sqlParser.AsignacionContext o : asig){
+            Asignacion temp = (Asignacion) this.visitAsignacion(o);
+            asigna.add(temp);
+        }
+        
+        /*Contiene toda la cadena para el postfix*/
+        ni = (String)this.visitExp((sqlParser.ExpContext) ctx.getChild(ctx.getChildCount()-1));
+        /*antes de borrarlo contiene todas las condiciones que se crearon en el where*/
+        condition.clear();
+        return (T) ""; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitAsignacion(sqlParser.AsignacionContext ctx) {
+        String nameColumna = ctx.getChild(0).getText();
+        sqlParser.LiteralContext hijo1 = (sqlParser.LiteralContext) ctx.getChild(2);
+        Value val = (Value) this.visitLiteral(hijo1);
+        String tipo = val.getTipo();
+        String valor = val.getValue();
+        Asignacion asig = new Asignacion(nameColumna,tipo,valor);
+        return (T)asig; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public T visitDelete(sqlParser.DeleteContext ctx) {
+        String nameTB = ctx.getChild(2).getText();
+        String ni="";
+        if(ctx.getChildCount()>3){
+            /*Contiene toda la cadena para el postfix*/
+            ni = (String)this.visitExp((sqlParser.ExpContext) ctx.getChild(ctx.getChildCount()-1));
+            /*antes de borrarlo contiene todas las condiciones que se crearon en el where*/
+            condition.clear();
+        }
+        return (T)""; //To change body of generated methods, choose Tools | Templates.
+    }
+
+    
+    
+    
+    @Override
     public String toString() { 
         return mn.toString();
     }

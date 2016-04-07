@@ -49,9 +49,27 @@ public class toPostFix {
         int i = 0;
         String seg = ""; 
         while ( i < exp.length()) {
-            seg = seg.concat(String.valueOf(exp.charAt(i)));
-            if (seg.)
-            i++; 
+            String current = (String.valueOf(exp.charAt(i)));
+            if (current.equals("(")) {
+                
+            } else if (current.equals(")")){
+                
+            } else if (current.equals("<")) {
+                
+            } else if (current.equals(">")) {
+                
+            } else if (current.equals("=")) {
+                
+            } else {
+                seg = seg.concat(current); 
+                if (seg.endsWith("AND")) { 
+                    
+                } else if (seg.endsWith("OR")) { 
+                    
+                } else if (seg.endsWith("NOT")) { 
+                    
+                } 
+            } 
         }
         return postFix; 
     }

@@ -478,12 +478,7 @@ public class DBDataManager implements dataManager{
                                             ConditionObj.put("column", tempCon.getColumn());
                                             ConditionObj.put("value", tempCon.getValue());
                                             ConditionObj.put("valueType", tempCon.getValueType());
-                                            if (tempCon.isDistinct()) ConditionObj.put("symbol", "<>"); 
-                                            if (tempCon.isEqual()) ConditionObj.put("symbol", "="); 
-                                            if (tempCon.isMinValue()) ConditionObj.put("symbol", ">"); 
-                                            if (tempCon.isMinValueInc()) ConditionObj.put("symbol", ">="); 
-                                            if (tempCon.isMaxValue()) ConditionObj.put("symbol", "<"); 
-                                            if (tempCon.isMaxValueInc()) ConditionObj.put("symbol", "<=");
+                                            
                                             String exp = tempChk.getCheckString();
                                             toPostFix pf = new toPostFix(); 
                                             
@@ -765,4 +760,713 @@ public class DBDataManager implements dataManager{
         return false; 
     }
     
+    
+public ArrayList<String> getTableColumns (String TableName){
+        ArrayList<String> columns = new ArrayList<>();
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName,TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray atributos = (JSONArray) tabla.get("atributes");
+            for (Object atributo : atributos) {
+                JSONObject obj = (JSONObject) atributo;
+                columns.add((String) obj.get("name")); 
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return columns;
     }
+    
+    public ArrayList<String> getColumnsType(String TableName){
+        ArrayList<String> types = new ArrayList<>();
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName,TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray atributos = (JSONArray) tabla.get("atributes");
+            for (Object atributo : atributos) {
+                JSONObject obj = (JSONObject) atributo;
+                types.add((String) obj.get("type")); 
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return types;
+    }
+    public ArrayList<Long> getColumnsIndex(String TableName){
+        ArrayList<Long> indexs = new ArrayList<>();
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName,TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray atributos = (JSONArray) tabla.get("atributes");
+            for (Object atributo : atributos) {
+                JSONObject obj = (JSONObject) atributo;
+                indexs.add((Long) obj.get("index")); 
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return indexs;
+    }
+    public ArrayList<Long> getColumnsSize(String TableName){
+        ArrayList<Long> size = new ArrayList<>();
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName,TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray atributos = (JSONArray) tabla.get("atributes");
+            for (Object atributo : atributos) {
+                JSONObject obj = (JSONObject) atributo;
+                size.add((Long) obj.get("size")); 
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return size;
+    }
+    
+    public ArrayList<String> getnamePK(String TableName){
+        ArrayList<String> PK = new ArrayList<>();
+        
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName, TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray pkArray = (JSONArray) tabla.get("primary");
+            if (pkArray.size()>0){
+               JSONObject pk  = (JSONObject)pkArray.get(0);
+               JSONArray atributes = (JSONArray) pk.get("atributes");
+               for (int i = 0; i < atributes.size(); i++) {
+                   JSONObject obj  = (JSONObject)atributes.get(i);
+                   PK.add((String) obj.get("name"));
+               }   
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return PK;
+    }
+    
+    public ArrayList<String> getnameFK (String TableName){
+        ArrayList<String> FK = new ArrayList<>();
+        
+        if (existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName, TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray fkArray = (JSONArray) tabla.get("foreign");
+            if (fkArray.size()>0){
+                JSONObject fk  = (JSONObject)fkArray.get(0);
+                JSONArray atributes = (JSONArray) fk.get("atributes");
+                for (int i = 0; i < atributes.size(); i++) {
+                    JSONObject obj  = (JSONObject)atributes.get(i);
+                    FK.add((String) obj.get("name"));
+                }
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        return FK;
+    }
+    
+    public ArrayList<Value> InfoTabla(String TableName){
+        
+        Value val;
+        ArrayList<Value> values = new ArrayList<>();
+        if(existTable(TableName)){
+            JSONArray TableList = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+            int index = getIndex(TableName, TableList);
+            JSONObject tabla = (JSONObject) TableList.get(index);
+            JSONArray atributos = (JSONArray) tabla.get("atributes");
+            for (Object atributo : atributos) {
+                JSONObject obj = (JSONObject) atributo;
+                //Value(String tipo, String value)
+                //donde: TIPO = int, char, date, float
+                //      VALUE = nombre de la columna que tiene con ese tipo.
+                val=new Value((String)obj.get("type"),(String)obj.get("name"));
+                values.add(val);
+            }
+        }
+        else{
+            System.out.println("ERROR. La Tabla "+TableName+" no existe.");
+        }
+        
+        return values;
+    }
+
+    @Override
+    public void insertIntoTable (String nomTabla, ArrayList<String> columns, ArrayList values){
+        boolean error = false;
+        int insrows = 0;
+        ArrayList<String> columnasTabla = getTableColumns(nomTabla);
+        ArrayList<String> tiposTabla = getColumnsType(nomTabla);
+        ArrayList<Long> indices = getColumnsIndex(nomTabla);
+        JSONObject obj = new JSONObject();
+        if (existTable(nomTabla)){
+            if (columns.isEmpty()){//cuando se hace un insert y no se especifican a que columnas van a ingresar valores
+                if (columnasTabla.size() == values.size()){
+                    JSONArray tabla = getJsonArray(actual.getDirPath()+"\\"+nomTabla+".json");
+                    JSONArray bd = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                    for (int i = 0; i < columnasTabla.size(); i++) {
+                        //valido de que el tipo de dato que le estoy metiendo sea del mismo tipo de la columna.
+                        Value val = (Value) values.get(i);
+                        //System.out.println(tiposTabla.get(i) +" "+ indices.get(i)+" "+ val.getTipo());
+                        if (tiposTabla.get(i).equals(val.getTipo())){
+                            if (tiposTabla.get(i).equals("date") || val.getTipo().equals("date")){
+                                dateManager revDate = new dateManager();
+                                if(revDate.defensive(val.getValue())){
+                                    obj.put(columnasTabla.get(i), val.getValue());
+                                }
+                                else{
+                                    System.out.println("ERROR. La fecha "+ val.getValue()+ "es invalida.");
+                                    error = true;
+                                }
+                            }
+                            if(tiposTabla.get(i).equals("char") || val.getTipo().equals("char")){
+                                //valido el tamanio del CHAR.
+                                ArrayList<Long> sizes = getColumnsSize(nomTabla);
+                                int tamActual = sizes.get(i).intValue();
+                                if (val.getValue().length()> tamActual){
+                                    System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                    error = true;
+                                }
+                                else{
+                                    obj.put(columnasTabla.get(i), val.getValue());
+                                }
+                            }
+                            if(tiposTabla.get(i).equals("int")&&val.getTipo().equals("int")){
+                                obj.put(columnasTabla.get(i), val.getValue());
+                            }
+                            else if (tiposTabla.get(i).equals("float")&&val.getTipo().equals("float")){
+                                obj.put(columnasTabla.get(i), val.getValue());
+                            }
+                        }
+                        else{
+                            //A CONTINUACION VALIDO EL FORMATO DE VALORES EN EL CASO DE INT Y FLOAT. 
+                            //SE HACE LA CONVERSION DE TIPOS PARA LAS COLUMNAS.
+                            if (tiposTabla.get(i).equals("int") && val.getTipo().equals("float")) {
+                                float newvalue = Float.parseFloat(val.getValue());
+                                int nv = (int)newvalue;
+                                String NV = String.valueOf(nv);
+                                obj.put(columnasTabla.get(i), val.getValue());
+                            }
+                            else if(tiposTabla.get(i).equals("float")&& val.getTipo().equals("int")){
+                                obj.put(columnasTabla.get(i), val.getValue()+".0");
+                            }
+                            else{
+                                System.out.println("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                error = true;
+                            }
+                        }
+                    }
+                    //escribo en el JSON de la Tabla
+                    tabla.add(obj);
+                    this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                    insrows+=1;
+                    //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                    int index = getIndex(nomTabla, bd);
+                    JSONObject tablaInfo = (JSONObject) bd.get(index);
+                    long size = (long) tablaInfo.get("size");
+                    tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                    bd.remove(index);
+                    bd.add(tablaInfo);
+                    this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                }
+                else if (columnasTabla.size()>values.size()){ //donde hay mas columnas que valores en el value. (NULLs)
+                    JSONArray tabla = getJsonArray(actual.getDirPath()+"\\"+nomTabla+".json");
+                    JSONArray bd = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                    //debo de poner NULL en donde ya no hayan valores.
+                    for (int i = 0; i < columnasTabla.size(); i++) {
+                        
+                        if (tiposTabla.get(i).equals(((Value)values.get(i)).getTipo())){
+                            if (tiposTabla.get(i).equals("date") || ((Value)values.get(i)).getTipo().equals("date")){
+                                dateManager revDate = new dateManager();
+                                if(revDate.defensive(((Value)values.get(i)).getValue())){
+                                    if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                                }
+                                else{
+                                    System.out.println("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
+                                    error = true;
+                                }
+                            }
+                            if(tiposTabla.get(i).equals("char") || ((Value)values.get(i)).getTipo().equals("char")){
+                                //valido el tamanio del CHAR.
+                                ArrayList<Long> sizes = getColumnsSize(nomTabla);
+                                int tamActual = sizes.get(i).intValue();
+                                if (((Value)values.get(i)).getValue().length()> tamActual){
+                                    System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                    error = true;
+                                }
+                                else{
+                                    if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                                }
+                            }
+                            if(tiposTabla.get(i).equals("int")&&((Value)values.get(i)).getTipo().equals("int")){
+                                if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                            }
+                            else if (tiposTabla.get(i).equals("float")&&((Value)values.get(i)).getTipo().equals("float")){
+                                if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                            }
+                        }
+                        else{
+                            //A CONTINUACION VALIDO EL FORMATO DE VALORES EN EL CASO DE INT Y FLOAT. 
+                            //SE HACE LA CONVERSION DE TIPOS PARA LAS COLUMNAS.
+                            if (tiposTabla.get(i).equals("int") && ((Value)values.get(i)).getTipo().equals("float")) {
+                                float newvalue = Float.parseFloat(((Value)values.get(i)).getValue());
+                                int nv = (int)newvalue;
+                                String NV = String.valueOf(nv);
+                                if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                            }
+                            else if(tiposTabla.get(i).equals("float")&& ((Value)values.get(i)).getTipo().equals("int")){
+                                if (values.size()>=i){
+                                        String elem = ((Value)values.get(i)).getValue();
+                                        values.remove(i);
+                                        obj.put(columnasTabla.get(i), elem);
+                                        //obj.put(columnasTabla.get(i), val.getValue());
+                                    }
+                                    else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                        //inserto valores null cuando hagan falta.
+                                        obj.put(columnasTabla.get(i),null);
+                                    }
+                            }
+                            else{
+                                System.out.println("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                error = true;
+                            }
+                        }
+                        
+                    }
+                    //escribo en el JSON de la Tabla
+                    tabla.add(obj);
+                    this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                    insrows+=1;
+                    //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                    int index = getIndex(nomTabla, bd);
+                    JSONObject tablaInfo = (JSONObject) bd.get(index);
+                    long size = (long) tablaInfo.get("size");
+                    tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                    bd.remove(index);
+                    bd.add(tablaInfo);
+                    this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                }
+                else{
+                    System.out.println("ERROR. No se pueden insertar mas valores de la cantidad de columnas de la tabla.");
+                    error = true;
+                }
+            }
+            //****************************************PARTE DOS DEL INSERTTT**********************************
+        else{ //cuando si incluyen que valores de que columnas quieren insertar
+               if (columns.size()>columnasTabla.size()) {
+                   System.out.println("ERROR. No se pueden seleccionar mas columnas de las que tiene la tabla solicitada.");
+                   error = true;
+               }
+               else{
+                   if (columns.size() == values.size()) {
+                       if (values.size()>columnasTabla.size()){
+                            System.out.println("ERROR. Se pretende insertar mas valores a la tabla que la misma cantidad de columnas de la misma.");
+                            error = true;
+                        }
+                        else if (columnasTabla.size()>values.size()){ //cuando hay que reemplazar con nulls
+                            JSONArray tabla = getJsonArray(actual.getDirPath()+"\\"+nomTabla+".json");
+                            JSONArray bd = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                            for (int i = 0; i < columns.size(); i++) {
+                                 for (int j = 0; j < columnasTabla.size(); j++) {
+                                     //Value val = (Value) values.get(i);
+                                     if ((columns.get(i).equals(columnasTabla.get(j))) && columnasTabla.contains(columns.get(i))){
+                                         if(values.size()>0){
+                                             if((tiposTabla.get((indices.get(j)).intValue()-1)).equals(((Value)values.get(i)).getTipo())){
+                                                //cuando tienen el mismo tipo ambos, se valida el formato de cada uno de los tipos correspondientes.
+                                                if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("date") || ((Value)values.get(i)).getTipo().equals("date")){
+                                                     dateManager revDate = new dateManager();
+                                                     if(revDate.defensive(((Value)values.get(i)).getValue())){
+                                                         //obj.put(columnasTabla.get(i), val.getValue());
+                                                       if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                        tabla.add(obj);
+                                                        this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                        insrows+=1;
+                                                        //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                        int index = getIndex(nomTabla, bd);
+                                                        JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                        long size = (long) tablaInfo.get("size");
+                                                        tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                        bd.remove(index);
+                                                        bd.add(tablaInfo);
+                                                        this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");    
+                                                   }
+                                                     else{
+                                                         System.out.println("ERROR. La fecha "+ ((Value)values.get(i)).getValue()+ "es invalida.");
+                                                         error = true;
+                                                     }
+                                                 }
+                                                 if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("char") || ((Value)values.get(i)).getTipo().equals("char")){
+                                                     //valido el tamanio del CHAR.
+                                                     ArrayList<Long> sizes = getColumnsSize(nomTabla);
+                                                     int tamActual = sizes.get(i).intValue();
+                                                     if (((Value)values.get(i)).getValue().length()> tamActual){
+                                                         System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+((Value)values.get(i)).getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                                         error = true;
+                                                     }
+                                                     else{
+                                                       if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                       tabla.add(obj);
+                                                        this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                        insrows+=1;
+                                                        //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                        int index = getIndex(nomTabla, bd);
+                                                        JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                        long size = (long) tablaInfo.get("size");
+                                                        tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                        bd.remove(index);
+                                                        bd.add(tablaInfo);
+                                                        this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
+                                                     }
+                                                     
+                                                 }
+                                                 if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("int")&&((Value)values.get(i)).getTipo().equals("int")){
+                                                       if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                       tabla.add(obj);
+                                                        this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                        insrows+=1;
+                                                        //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                        int index = getIndex(nomTabla, bd);
+                                                        JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                        long size = (long) tablaInfo.get("size");
+                                                        tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                        bd.remove(index);
+                                                        bd.add(tablaInfo);
+                                                        this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
+                                                 }
+                                                 else if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("float")&&((Value)values.get(i)).getTipo().equals("float")){
+                                                     if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                        tabla.add(obj);
+                                                        this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                        insrows+=1;
+                                                        //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                        int index = getIndex(nomTabla, bd);
+                                                        JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                        long size = (long) tablaInfo.get("size");
+                                                        tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                        bd.remove(index);
+                                                        bd.add(tablaInfo);
+                                                        this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
+                                                 }
+                                            }
+                                            else{
+                                                //LOS TIPOS SON DISTINTOS
+                                                //SE HACE LA CONVERSION DE TIPOS PARA LAS COLUMNAS.
+                                                 if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("int") && ((Value)values.get(i)).getTipo().equals("float")) {
+                                                     float newvalue = Float.parseFloat(((Value)values.get(i)).getValue());
+                                                     int nv = (int)newvalue;
+                                                     String NV = String.valueOf(nv);
+                                                     if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                    tabla.add(obj);
+                                                    this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                    insrows+=1;
+                                                    //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                    int index = getIndex(nomTabla, bd);
+                                                    JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                    long size = (long) tablaInfo.get("size");
+                                                    tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                    bd.remove(index);
+                                                    bd.add(tablaInfo);
+                                                    this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
+                                                 }
+                                                 else if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("float")&& ((Value)values.get(i)).getTipo().equals("int")){
+                                                     if (values.size()>=i){
+                                                           String elem = ((Value)values.get(i)).getValue();
+                                                           values.remove(i);
+                                                           obj.put(columnasTabla.get(i), elem);
+                                                           //obj.put(columnasTabla.get(i), val.getValue());
+                                                       }
+                                                       else if(values.size()<i &&(columnasTabla.size()>=0)){ //cuando hay mas columnas que valores especificados en el insert.
+                                                           //inserto valores null cuando hagan falta.
+                                                           obj.put(columnasTabla.get(i),null);
+                                                       }
+                                                     tabla.add(obj);
+                                                    this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                                    insrows+=1;
+                                                    //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                                    int index = getIndex(nomTabla, bd);
+                                                    JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                                    long size = (long) tablaInfo.get("size");
+                                                    tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                                    bd.remove(index);
+                                                    bd.add(tablaInfo);
+                                                    this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json"); 
+                                                 }
+                                                 else{
+                                                     System.out.println("ERROR. No se puede insertar un valor de tipo "+((Value)values.get(i)).getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                                     error = true;
+                                                 }
+                                            }
+                                         }
+                                         else{
+                                             obj.put(columnasTabla.get(i),null);
+                                             tabla.add(obj);
+                                            this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                                            insrows+=1;
+                                            //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                                            int index = getIndex(nomTabla, bd);
+                                            JSONObject tablaInfo = (JSONObject) bd.get(index);
+                                            long size = (long) tablaInfo.get("size");
+                                            tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                                            bd.remove(index);
+                                            bd.add(tablaInfo);
+                                            this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");    
+                                         }
+                                         
+                                     }
+                                     else{
+                                        
+                                         if (columnasTabla.contains(columns.get(i))){
+                                             if(!columns.contains(columnasTabla.get(j))){
+                                                columns.add(columnasTabla.get(j));    
+                                             }
+                                         }
+                                         else{
+                                            System.out.println("ERROR. Se esta especificando una columna ("+columns.get(i)+") que no existe en la tabla .");
+                                            error = true;   
+                                         }
+                                     }
+                                 }
+                             }                        
+                        }
+                        else{//cuando son del mismo tamaño
+                             JSONArray tabla = getJsonArray(actual.getDirPath()+"\\"+nomTabla+".json");
+                             JSONArray bd = getJsonArray(actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");
+                            for (int i = 0; i < columns.size(); i++) {
+                                 Value val = (Value) values.get(i);
+                                 for (int j = 0; j < columnasTabla.size(); j++) {
+                                     if (columns.get(i).equals(columnasTabla.get(j))){
+                                         if((tiposTabla.get((indices.get(j)).intValue()-1)).equals(val.getTipo())){
+                                             //cuando tienen el mismo tipo ambos, se valida el formato de cada uno de los tipos correspondientes.
+                                             if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("date") || val.getTipo().equals("date")){
+                                                  dateManager revDate = new dateManager();
+                                                  if(revDate.defensive(val.getValue())){
+                                                      obj.put(columnasTabla.get(i), val.getValue());
+                                                  }
+                                                  else{
+                                                      System.out.println("ERROR. La fecha "+ val.getValue()+ "es invalida.");
+                                                      error = true;
+                                                  }
+                                              }
+                                              if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("char") || val.getTipo().equals("char")){
+                                                  //valido el tamanio del CHAR.
+                                                  ArrayList<Long> sizes = getColumnsSize(nomTabla);
+                                                  int tamActual = sizes.get(i).intValue();
+                                                  if (val.getValue().length()> tamActual){
+                                                      System.out.println("ERROR. El tamaño del CHAR que se desea insertar ("+val.getValue()+") supera el tamaño permitido de este atributo ("+tamActual+")");
+                                                      error = true;
+                                                  }
+                                                  else{
+                                                      obj.put(columnasTabla.get(i), val.getValue());
+                                                  }
+                                              }
+                                              if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("int")&&val.getTipo().equals("int")){
+                                                  obj.put(columnasTabla.get(i), val.getValue());
+                                              }
+                                              else if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("float")&&val.getTipo().equals("float")){
+                                                  obj.put(columnasTabla.get(i), val.getValue());
+                                              }
+                                         }
+                                         else{
+                                             //LOS TIPOS SON DISTINTOS
+                                             //SE HACE LA CONVERSION DE TIPOS PARA LAS COLUMNAS.
+                                              if ((tiposTabla.get((indices.get(j)).intValue()-1)).equals("int") && val.getTipo().equals("float")) {
+                                                  float newvalue = Float.parseFloat(val.getValue());
+                                                  int nv = (int)newvalue;
+                                                  String NV = String.valueOf(nv);
+                                                  obj.put(columnasTabla.get(i), val.getValue());
+                                              }
+                                              else if((tiposTabla.get((indices.get(j)).intValue()-1)).equals("float")&& val.getTipo().equals("int")){
+                                                  obj.put(columnasTabla.get(i), val.getValue()+".0");
+                                              }
+                                              else{
+                                                  System.out.println("ERROR. No se puede insertar un valor de tipo "+val.getTipo()+" en una columna de tipo "+tiposTabla.get(i));   
+                                                  error = true;
+                                              }
+                                         }
+                                     }
+                                     else{
+                                         System.out.println("ERROR. Se esta especificando una columna que no existe en la tabla ("+columns.get(i)+").");
+                                         error = true;
+                                     }
+                                 }
+                             }
+                            //escribo en el JSON de la Tabla
+                             tabla.add(obj);
+                             this.writeIn(tabla.toJSONString(), actual.getDirPath()+"\\"+nomTabla+".json");
+                             insrows+=1;
+                             //Escribo en el JSON de la METADATA de la BASE DE DATOS
+                             int index = getIndex(nomTabla, bd);
+                             JSONObject tablaInfo = (JSONObject) bd.get(index);
+                             long size = (long) tablaInfo.get("size");
+                             tablaInfo.put("size", size+1); //cambio el size porque aumenta en uno.
+                             bd.remove(index);
+                             bd.add(tablaInfo);
+                             this.writeIn(bd.toJSONString(), actual.getDirPath()+"\\"+actual.getName()+"MetaData.json");    
+                        }
+                    }
+                    else{
+                        System.out.println("ERROR. La cantidad de columnas especificadas deben de ser igual a la cantidad de elementos en la clausula VALUE.");
+                        error = true;
+                    }   
+                }
+            }
+        }
+        else{
+            System.out.println("ERROR. La tabla a la cual se quiere hacer insert ("+nomTabla +") no existe.");
+            error = true;
+        }
+        if (error) {
+                System.out.println("ERROR. El INSERT ("+ insrows+ ") NO se ha realizado con exito.");
+            }
+        else{
+            System.out.println("El INSERT ("+insrows+") se ha realizado con exito.");
+        }
+    }
+    
+    @Override
+    public void updateTable (String nomTabla, ArrayList<String> columns, ArrayList values){
+        boolean error = false;
+        int rowsupt=0;
+        
+        if(columns.isEmpty()){
+            error = true;
+        }
+        else{//cuando no hay error.
+            if (existTable(nomTabla)){
+                
+            }
+            else{
+                error = true;
+            }
+        }
+        
+        
+        if (error) {
+            System.out.println("UPDATE ("+rowsupt+") realizado con exito.");
+        }
+        else{
+            System.out.println("ERROR. UPDATE ("+rowsupt+") no se ha realizado con exito.");
+        }
+    }
+    
+    @Override
+    public void deleteFromTable (String nomTabla){
+        boolean error = false;
+        int rowsdel = 0;
+        
+        if (existTable(nomTabla)){
+            
+        }
+        else{
+            error = true;
+        }
+        
+        if (error) {
+            System.out.println("DELETE ("+rowsdel+") realizado con exito.");
+        }
+        else{
+            System.out.println("ERROR. DELETE ("+rowsdel+") no se ha realizado con exito.");
+        }
+    }
+}

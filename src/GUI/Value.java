@@ -25,6 +25,10 @@ public class Value {
         this.value = value;
     }
 
+    public Value() {
+    }
+
+    
     public String getId() {
         return id;
     }
